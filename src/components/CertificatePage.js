@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { IconGraduationCap, IconCheck } from './Icons';
+import { BackButton } from './shared';
 
-export default function CertificatePage({ type, data }) {
+export default function CertificatePage({ type, data, goTo, goBack }) {
   const [code, setCode] = useState('');
   const [result, setResult] = useState(null); // null | 'found' | 'notfound'
   const [certificate, setCertificate] = useState(null);
@@ -41,11 +43,12 @@ export default function CertificatePage({ type, data }) {
   };
 
   return (
-    <div style={{ minHeight: '100vh', padding: '100px 24px 60px' }}>
+    <div style={{ minHeight: '100vh', padding: '64px 24px 60px' }}>
       <div style={{ maxWidth: 700, margin: '0 auto' }}>
 
         {/* Header */}
         <div style={{ marginBottom: 48 }}>
+          <BackButton onClick={goTo ? () => goTo('certificates') : goBack} />
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
             background: colorBg, border: `1px solid ${colorBorder}`,
@@ -133,7 +136,7 @@ export default function CertificatePage({ type, data }) {
                 background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)',
                 borderRadius: 100, padding: '8px 18px',
               }}>
-                <span style={{ color: '#22c55e', fontSize: 14, fontWeight: 600 }}>✓ Certificate Verified</span>
+                <span style={{ color: '#22c55e', fontSize: 14, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}><IconCheck size={15} /> Certificate Verified</span>
               </div>
               <button onClick={handleReset} style={{
                 background: 'rgba(26,110,252,0.05)', border: '1px solid rgba(255,255,255,0.1)',
@@ -148,11 +151,10 @@ export default function CertificatePage({ type, data }) {
               display: 'flex', gap: 20, alignItems: 'center', flexWrap: 'wrap',
             }}>
               <div style={{
-                width: 56, height: 56, borderRadius: 14, flexShrink: 0,
+                width: 56, height: 56, borderRadius: 14, flexShrink: 0, color: '#fff',
                 background: `linear-gradient(135deg, ${color}, #7c5cfc)`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 22,
-              }}>🎓</div>
+              }}><IconGraduationCap size={26} /></div>
               <div style={{ flex: 1, minWidth: 180 }}>
                 <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>{certificate.name}</h2>
                 <p style={{ color: '#4a6080', fontSize: 14 }}>

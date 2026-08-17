@@ -23,6 +23,30 @@
   --radius: 14px;
   --font-head: 'Plus Jakarta Sans', sans-serif;
   --font-body: 'Outfit', sans-serif;
+
+  --sidebar-w: 256px;
+  --sidebar-w-collapsed: 76px;
+  --sidebar-bg: #0a1628;
+  --sidebar-bg2: #0f2036;
+  --sidebar-border: rgba(255,255,255,0.08);
+  --sidebar-text: rgba(255,255,255,0.65);
+}
+
+.main-content {
+  margin-left: var(--sidebar-w);
+  min-height: 100vh;
+  transition: margin-left 0.25s ease;
+}
+.main-content.collapsed {
+  margin-left: var(--sidebar-w-collapsed);
+}
+@media (max-width: 900px) {
+  .main-content,
+  .main-content.collapsed {
+    margin-left: 0 !important;
+    padding-top: 58px;
+    padding-bottom: 78px;
+  }
 }
 
 html {
