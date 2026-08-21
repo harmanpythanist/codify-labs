@@ -3,13 +3,79 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Codify Labs — AI-powered software solutions, tech services, internships and courses." />
-    <title>Codify Labs</title>
+    <meta name="theme-color" content="#1E2D5E" />
+
+    <title>Codify Labs — AI-Powered Software, Websites &amp; Custom Applications</title>
+    <meta name="description" content="Codify Labs builds AI-powered software, websites, and custom applications for businesses worldwide — plus courses and internships for the next generation of AI talent." />
+    <link rel="canonical" href="https://codifylabs.pk/" />
+
+    <!-- Icons -->
+    <link rel="icon" href="%PUBLIC_URL%/favicon.png" type="image/png" sizes="64x64" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/apple-touch-icon.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+
+    <!--
+      Open Graph / Twitter defaults.
+
+      These static tags are what WhatsApp, LinkedIn, Slack and Facebook read,
+      because those scrapers do not run JavaScript. Per-route tags are set at
+      runtime by src/hooks/useSeo.js for browsers and for Google.
+
+      TODO: add public/og-image.png (1200x630) with the penguin + wordmark so
+      shared links show a proper preview card.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Codify Labs" />
+    <meta property="og:title" content="Codify Labs — AI-Powered Software, Websites &amp; Custom Applications" />
+    <meta property="og:description" content="AI-powered software, websites, and custom applications for businesses worldwide — plus courses and internships." />
+    <meta property="og:url" content="https://codifylabs.pk/" />
+    <meta property="og:image" content="https://codifylabs.pk/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Codify Labs — AI-Powered Software, Websites &amp; Custom Applications" />
+    <meta name="twitter:description" content="AI-powered software, websites, and custom applications for businesses worldwide." />
+    <meta name="twitter:image" content="https://codifylabs.pk/og-image.png" />
+
+    <!-- Fonts: only the two families the site actually uses. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Tells Google who you are, and links the site to your social profiles. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Codify Labs",
+        "url": "https://codifylabs.pk/",
+        "logo": "https://codifylabs.pk/logo.png",
+        "email": "codifylabs.pk@gmail.com",
+        "description": "Codify Labs builds AI-powered software, websites, and custom applications for businesses worldwide, and runs courses and internships in AI and software development.",
+        "sameAs": [
+          "https://www.instagram.com/codifylabs.pk/",
+          "https://www.linkedin.com/company/codifyylabs/"
+        ],
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "sales",
+          "email": "codifylabs.pk@gmail.com",
+          "telephone": "+92-332-9555307",
+          "availableLanguage": ["English", "Urdu"]
+        }
+      }
+    </script>
   </head>
   <body>
+    <noscript>
+      <div style="font-family: system-ui, sans-serif; max-width: 640px; margin: 80px auto; padding: 0 24px; line-height: 1.6;">
+        <h1 style="font-size: 24px;">Codify Labs</h1>
+        <p>This site needs JavaScript enabled. In the meantime you can reach us at
+          <a href="mailto:codifylabs.pk@gmail.com">codifylabs.pk@gmail.com</a> or on
+          <a href="https://wa.me/923329555307">WhatsApp</a>.</p>
+      </div>
+    </noscript>
     <div id="root"></div>
   </body>
 </html>

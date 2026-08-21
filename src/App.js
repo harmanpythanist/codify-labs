@@ -1,96 +1,82 @@
-import React, { useState, useEffect } from 'react';
-import Sidebar from './components/Sidebar';
-import Home from './components/Home';
-import Services from './components/Services';
-import Projects from './components/Projects';
-import Courses from './components/Courses';
-import Internship from './components/Internship';
-import Certificates from './components/Certificates';
-import CertificatePage from './components/CertificatePage';
-import About from './components/About';
-import Contact from './components/Contact';
-import { students, interns } from './certificates';
+import React, { useEffect } from 'react';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
+
+import Header from './components/Header';
+import { Footer } from './components/ui';
+
+import Home from './pages/Home';
+import Services from './pages/Services';
+import ServiceDetail from './pages/ServiceDetail';
+import Projects from './pages/Projects';
+import ProjectDetail from './pages/ProjectDetail';
+import Gallery from './pages/Gallery';
+import Courses from './pages/Courses';
+import Internship from './pages/Internship';
+import InternshipApply from './pages/InternshipApply';
+import Certificates from './pages/Certificates';
+import CertificateVerify from './pages/CertificateVerify';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import NotFound from './pages/NotFound';
+
+/** Scroll to the top on navigation, but leave hash links alone. */
+function ScrollToTop() {
+  const { pathname, hash } = useLocation();
+  useEffect(() => {
+    if (hash) return;
+    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+  }, [pathname, hash]);
+  return null;
+}
+
+/**
+ * The old site used `?verify=students` in the QR codes on printed
+ * certificates. Those codes are already out in the world, so we keep
+ * honouring them and redirect to the real route.
+ */
+function LegacyVerifyRedirect() {
+  const { search, pathname } = useLocation();
+  if (pathname !== '/') return null;
+  const verify = new URLSearchParams(search).get('verify');
+  if (verify === 'students') return <Navigate to="/certificates/students" replace />;
+  if (verify === 'interns') return <Navigate to="/certificates/interns" replace />;
+  return null;
+}
 
 export default function App() {
-  const [page, setPage] = useState('home');
-  const [subpage, setSubpage] = useState(null);
-  const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [, setHistory] = useState([]); // stack of previous { page, subpage }
-
-  // Support direct URL like ?verify=students or ?verify=interns (for QR code)
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const verify = params.get('verify');
-    if (verify === 'students' || verify === 'interns') {
-      setPage('certificates');
-      setSubpage(verify);
-    }
-  }, []);
-
-  // Scroll to top on page change
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [page, subpage]);
-
-  const goTo = (p, sp = null) => {
-    setHistory(h => [...h, { page, subpage }]);
-    setPage(p);
-    setSubpage(sp);
-    setMobileOpen(false);
-  };
-
-  const goBack = () => {
-    setHistory(h => {
-      if (h.length === 0) {
-        setPage('home');
-        setSubpage(null);
-        return h;
-      }
-      const prev = h[h.length - 1];
-      setPage(prev.page);
-      setSubpage(prev.subpage);
-      return h.slice(0, -1);
-    });
-    setMobileOpen(false);
-  };
-
   return (
-    <div>
-      <Sidebar
-        page={page}
-        goTo={goTo}
-        collapsed={collapsed}
-        setCollapsed={setCollapsed}
-        mobileOpen={mobileOpen}
-        setMobileOpen={setMobileOpen}
-      />
+    <div className="page">
+      <ScrollToTop />
+      <LegacyVerifyRedirect />
+      <Header />
 
-      <main className={`main-content ${collapsed ? 'collapsed' : ''}`}>
-        {page === 'home' && <Home goTo={goTo} />}
+      <main id="main" className="page-body">
+        <Routes>
+          <Route path="/" element={<Home />} />
 
-        {page === 'services' && <Services subpage={subpage} goTo={goTo} goBack={goBack} />}
+          <Route path="/services" element={<Services />} />
+          <Route path="/services/:slug" element={<ServiceDetail />} />
 
-        {page === 'projects' && <Projects goTo={goTo} goBack={goBack} />}
+          <Route path="/projects" element={<Projects />} />
+          <Route path="/projects/:slug" element={<ProjectDetail />} />
 
-        {page === 'courses' && <Courses goTo={goTo} goBack={goBack} />}
+          <Route path="/gallery" element={<Gallery />} />
+          <Route path="/courses" element={<Courses />} />
+          <Route path="/internship" element={<Internship />} />
+          <Route path="/internship/apply" element={<InternshipApply />} />
 
-        {page === 'internship' && <Internship goTo={goTo} goBack={goBack} />}
+          <Route path="/certificates" element={<Certificates />} />
+          <Route path="/certificates/students" element={<CertificateVerify type="students" />} />
+          <Route path="/certificates/interns" element={<CertificateVerify type="interns" />} />
 
-        {page === 'certificates' && !subpage && <Certificates goTo={goTo} goBack={goBack} />}
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
 
-        {page === 'certificates' && subpage === 'students' && (
-          <CertificatePage type="students" data={students} goTo={goTo} goBack={goBack} />
-        )}
-
-        {page === 'certificates' && subpage === 'interns' && (
-          <CertificatePage type="interns" data={interns} goTo={goTo} goBack={goBack} />
-        )}
-
-        {page === 'about' && <About goTo={goTo} goBack={goBack} />}
-
-        {page === 'contact' && <Contact goTo={goTo} goBack={goBack} />}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </main>
+
+      <Footer />
     </div>
   );
 }

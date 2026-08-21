@@ -1,0 +1,28 @@
+{
+  "short_name": "Codify Labs",
+  "name": "Codify Labs \u2014 AI-Powered Software Solutions",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "type": "image/png",
+      "sizes": "64x64",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "180x180",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo-icon.png",
+      "type": "image/png",
+      "sizes": "314x314",
+      "purpose": "any"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#1E2D5E",
+  "background_color": "#FFFFFF"
+}

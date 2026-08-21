@@ -1,147 +1,205 @@
 # Codify Labs Website — Setup Guide
 
-## What's in this project
-- **Home** — Company info, services, stats
-- **Students** — Certificate verification by code
-- **Interns** — Certificate verification by code
-- QR code on certificates → scan → enter code → PDF opens
+React site with real URLs, a gallery, certificate verification, and SEO.
 
 ---
 
-## STEP 1: Install Required Tools
+## Quick start
 
-1. Download and install **Node.js** from https://nodejs.org (choose LTS version)
-2. Download and install **VS Code** from https://code.visualstudio.com
-3. Create a free account at **https://vercel.com** (sign up with GitHub)
-4. Create a free account at **https://github.com**
-
----
-
-## STEP 2: Set Up the Project
-
-1. Open VS Code
-2. Open the terminal in VS Code: **Terminal → New Terminal**
-3. Navigate to the project folder:
-   ```
-   cd path/to/codify-labs
-   ```
-4. Install dependencies:
-   ```
-   npm install
-   ```
-5. Run locally to test:
-   ```
-   npm start
-   ```
-   → Opens at http://localhost:3000
-
----
-
-## STEP 3: Add Certificates
-
-Open the file: `src/certificates.js`
-
-For each student or intern, add an entry like this:
-
-### For Students:
-```js
-{
-  code: "STU-001",          // ← code printed on certificate
-  name: "Ali Hassan",       // ← full name
-  course: "AI & Machine Learning",
-  date: "December 2024",
-  pdfUrl: "https://drive.google.com/file/d/FILE_ID/preview",
-},
+```bash
+npm install
+npm start
 ```
 
-### For Interns:
+Opens at http://localhost:3000
+
+---
+
+## The things you need to do
+
+### 1. Your logo — done
+
+Your uploaded logo is in place and used everywhere: header, footer, browser tab,
+home-screen icon, and the preview card shown when someone shares your link.
+
+It was cropped tight (your original had 31% empty space above and 28% below) and
+given a transparent background, so it sits cleanly on both the white header and
+the navy footer. See **`public/LOGO.md`** for every generated file and how to
+adjust the size.
+
+To swap it later, replace `public/logo.png` and check `logo` in `src/data/site.js`.
+
+---
+
+### 2. Add your gallery photos
+
+1. Put your image files in **`public/gallery/`**
+   e.g. `public/gallery/team-2025.jpg`
+
+2. Open **`src/data/gallery.js`** and add one line per photo:
+
+   ```js
+   export const GALLERY = [
+     { src: '/gallery/team-2025.jpg', alt: 'The Codify Labs team', category: 'Team' },
+     { src: '/gallery/office.jpg',    alt: 'Our workspace',        category: 'Workspace' },
+   ];
+   ```
+
+3. Save. The grid, the category filters, and the lightbox all update themselves.
+
+**Fields:**
+
+| Field | Required | Notes |
+|---|---|---|
+| `src` | yes | Path inside `public/`, always starting with `/gallery/` |
+| `alt` | yes | Describe the photo — read by screen readers, indexed by Google |
+| `category` | yes | One of: Team, Workspace, Events, Projects, Certificates |
+| `caption` | no | Shown on hover and in the lightbox |
+
+**Tips**
+- Landscape, ~1600px wide. Keep files under ~400KB (use tinypng.com).
+- Lowercase filenames with dashes: `team-workshop-2025.jpg`
+- Filters only appear for categories that actually have photos.
+- Until you add any, the page shows a tidy "coming soon" message — safe to deploy now.
+
+---
+
+### 3. Turn on the forms
+
+There are **two separate forms**, and both behave the same way:
+
+| Form | Page | For |
+|---|---|---|
+| Project request | `/contact` | Clients enquiring about work |
+| Internship application | `/internship/apply` | People applying to the programme |
+
+Right now both open **WhatsApp** with every field pre-filled. That always works,
+so you will never silently lose a lead or an application. If you'd rather have
+submissions land in your inbox instead:
+
+1. Go to https://web3forms.com, enter `codifylabs.pk@gmail.com`, get a free access key
+2. Copy `.env.example` to `.env`
+3. Set `REACT_APP_FORM_ENDPOINT=https://formspree.io/f/YOUR_ID` (or your Web3Forms URL)
+4. Restart `npm start`
+
+One endpoint serves both forms — each submission is labelled so you can tell them
+apart. If the endpoint ever fails, the form shows an error with your WhatsApp and
+email as fallbacks rather than pretending it sent.
+
+**Neither form asks about money.** The project form has no budget field, and the
+internship application has no fee or cost field — deliberately.
+
+---
+
+### 4. Add certificates
+
+Open **`src/data/certificates.js`**. Both lists start **empty on purpose** — a
+verification page that confirms a person who doesn't exist is worse than one that
+returns nothing.
+
 ```js
-{
-  code: "INT-001",
-  name: "Umar Ahmed",
-  role: "AI Engineer Intern",
-  date: "December 2024",
-  pdfUrl: "https://drive.google.com/file/d/FILE_ID/preview",
-},
+export const students = [
+  {
+    code: 'STU-001',
+    name: 'Real Full Name',
+    course: 'AI & Machine Learning',
+    date: 'December 2024',
+    pdfUrl: 'https://drive.google.com/file/d/FILE_ID/preview',
+  },
+];
 ```
 
-### How to get a Google Drive PDF link:
-1. Upload the PDF to Google Drive
-2. Right-click the file → **Share** → **Anyone with the link**
-3. Click **Copy link** — you get something like:
-   `https://drive.google.com/file/d/1aBcD.../view?usp=sharing`
-4. Change the end from `/view?usp=sharing` to `/preview`:
-   `https://drive.google.com/file/d/1aBcD.../preview`
-5. Paste that as the `pdfUrl`
+**Getting the Google Drive link:**
+Upload the PDF → right-click → Share → "Anyone with the link" → Copy link →
+change the ending from `/view?usp=sharing` to `/preview`.
+
+> ⚠️ Everything in this file is public — it ships inside the JavaScript bundle, so
+> anyone can read it with browser devtools. Don't put anything here you wouldn't put
+> on a public page. To keep records private, move them behind an API route.
 
 ---
 
-## STEP 4: Deploy to Vercel (Free)
+## QR codes on printed certificates
 
-### First time:
-1. Push your project to GitHub:
-   - Go to github.com → New Repository → name it `codify-labs`
-   - In VS Code terminal:
-     ```
-     git init
-     git add .
-     git commit -m "Initial commit"
-     git branch -M main
-     git remote add origin https://github.com/YOUR_USERNAME/codify-labs.git
-     git push -u origin main
-     ```
+Point them at:
+- Students: `https://codifylabs.pk/certificates/students`
+- Interns: `https://codifylabs.pk/certificates/interns`
 
-2. Go to **vercel.com** → **New Project** → Import from GitHub
-3. Select your `codify-labs` repo
-4. Click **Deploy** — done! You get a URL like `codify-labs.vercel.app`
-
-### Every time you add a new certificate:
-1. Edit `src/certificates.js`
-2. In terminal:
-   ```
-   git add .
-   git commit -m "Added new certificate"
-   git push
-   ```
-3. Vercel auto-deploys in ~30 seconds ✓
+**Old QR codes still work.** Anything already printed with `?verify=students` or
+`?verify=interns` redirects automatically to the new URLs.
 
 ---
 
-## STEP 5: Make the QR Code
+## Where everything lives
 
-1. Go to **qr-code-generator.com** or **qrcode-monkey.com**
-2. Paste your verify URL:
-   - For students: `https://YOUR-SITE.vercel.app?verify=students`
-   - For interns:  `https://YOUR-SITE.vercel.app?verify=interns`
-3. Download as PNG
-4. Add this QR code image to your certificate design (in Canva, Word, etc.)
+```
+public/
+  gallery/            ← your gallery photos go here
+  projects/           ← case-study screenshots go here
+  index.html          meta tags, fonts, structured data
+  logo.png            your logo — see LOGO.md for all the variants
+  favicon.png         browser tab icon
+  og-image.png        link-preview card
+  robots.txt
+  sitemap.xml         auto-generated, don't edit by hand
+
+src/
+  data/               ← EDIT THESE. Plain content, no code.
+    site.js             email, WhatsApp, social links, stats
+    services.js         the 10 services
+    projects.js         case studies
+    gallery.js          gallery photos
+    certificates.js     certificate records
+  pages/              one file per page
+    Contact.js          project request form
+    InternshipApply.js  internship application form
+  components/         header, footer, logo, icons, shared UI
+  hooks/useSeo.js     per-page titles and meta tags
+  index.css           the design system — all colours live here
+```
+
+**To change contact details anywhere on the site**, edit `src/data/site.js` only.
+Every page reads from it.
+
+**To change the brand colours**, edit the `:root` block at the top of `src/index.css`.
+Nothing is hardcoded elsewhere.
 
 ---
 
-## STEP 6: Certificate Codes
+## Deploying to Vercel
 
-You decide the codes. Recommended format:
-- Students: `STU-001`, `STU-002`, `STU-003`...
-- Interns:  `INT-001`, `INT-002`, `INT-003`...
+```bash
+git add .
+git commit -m "Update site"
+git push
+```
 
-Print the code visibly on each certificate (e.g. bottom corner).
-The person scans the QR → lands on verify page → types their code → PDF opens.
+Vercel redeploys in ~30 seconds.
+
+`vercel.json` is already set up so that refreshing a deep link like
+`/services/computer-vision` works instead of 404ing.
+
+**First-time setup:** vercel.com → New Project → import the GitHub repo → Deploy.
+If you set `REACT_APP_FORM_ENDPOINT` locally, add it under
+Project Settings → Environment Variables too.
 
 ---
 
-## Updating Company Info
+## Still to do
 
-To update text on the Home page, edit: `src/components/Home.js`
-To update contact email, search for `contact@codifylabs.com` and replace it.
+- [ ] Add gallery photos (`public/gallery/` + `src/data/gallery.js`)
+- [ ] Add case-study screenshots (`public/projects/` + `image:` field in `projects.js`)
+- [ ] Add real testimonials — the single highest-converting thing missing
+- [ ] Point `SITE.url` in `src/data/site.js` at your real domain if it isn't codifylabs.pk
+- [ ] Add analytics (Vercel Analytics is one click and needs no cookie banner)
+- [ ] Add a privacy policy page — you collect names and emails from EU/UK visitors
 
 ---
 
-## Summary of Files to Know
+## Handy commands
 
-| File | What it does |
-|------|-------------|
-| `src/certificates.js` | Add/edit student & intern certificates here |
-| `src/components/Home.js` | Company info, services, stats |
-| `src/components/CertificatePage.js` | Verify page (same for students & interns) |
-| `src/components/Navbar.js` | Top navigation bar |
-| `src/App.js` | Main app, handles navigation |
+```bash
+npm start      # dev server
+npm run build  # production build (regenerates the sitemap first)
+npm run sitemap # regenerate sitemap.xml only
+```
