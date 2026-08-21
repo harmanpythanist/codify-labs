@@ -12,7 +12,7 @@ export const SITE = {
 
   // Set this to your live domain once deployed. Used for canonical URLs,
   // Open Graph tags, and sitemap.xml.
-  url: 'https://codifylabs.pk',
+  url: 'https://codifylabspk.com',
 
   email: 'codifylabs.pk@gmail.com',
 

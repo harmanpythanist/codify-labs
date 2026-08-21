@@ -10,7 +10,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const BASE = 'https://codifylabs.pk';
+const BASE = 'https://codifylabspk.com';
 
 /** Pull the slugs straight out of the data files so they can never drift. */
 function slugsFrom(file) {

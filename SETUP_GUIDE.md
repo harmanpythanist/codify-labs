@@ -122,8 +122,8 @@ change the ending from `/view?usp=sharing` to `/preview`.
 ## QR codes on printed certificates
 
 Point them at:
-- Students: `https://codifylabs.pk/certificates/students`
-- Interns: `https://codifylabs.pk/certificates/interns`
+- Students: `https://codifylabspk.com/certificates/students`
+- Interns: `https://codifylabspk.com/certificates/interns`
 
 **Old QR codes still work.** Anything already printed with `?verify=students` or
 `?verify=interns` redirects automatically to the new URLs.
