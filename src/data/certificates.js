@@ -28,7 +28,7 @@ export const students = [
        course: 'AI & Machine Learning',
        date: 'August 25',
        pdfUrl: 'https://drive.google.com/drive/folders/1xsW-BJuW-afJ7mLzSPXHftu8GEU6rnxx',
-  // },
+   }
 ];
 
 export const interns = [
