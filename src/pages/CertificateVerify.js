@@ -148,7 +148,9 @@ export default function CertificateVerify({ type }) {
                     Open <IconExternal size={14} />
                   </a>
                 </div>
-                <iframe src={driveUrls(record.pdfUrl).embed} title={`Certificate for ${record.name}`} loading="lazy" />
+                <div className={`pdf-stage ${(record.rotate ?? 90) ? 'pdf-stage-rot' : 'pdf-stage-flat'}`}>
+                  <iframe src={driveUrls(record.pdfUrl).embed} title={`Certificate for ${record.name}`} loading="lazy" />
+                </div>
               </div>
             </div>
           )}
@@ -177,16 +179,28 @@ export default function CertificateVerify({ type }) {
           display: flex; align-items: center; justify-content: space-between;
           gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--line);
         }
-        /* Certificates are landscape (~1.43:1). Match the frame to the page so the
-           Drive viewer fits it to width instead of letterboxing it. */
-        .pdf-card iframe {
-          width: 100%; aspect-ratio: 1.43 / 1; min-height: 340px;
-          border: none; display: block; background: #fff;
+        /* Certificates come out of "Print to PDF" as a PORTRAIT US Letter page
+           (612x792) with the landscape artwork drawn sideways on it. Drive renders
+           the page exactly as stored, so we rotate the frame instead of the file.
+
+           The stage is the rotated footprint (792x612). The iframe keeps the page's
+           own portrait proportions (612/792 = 77.27% wide, 792/612 = 129.41% tall
+           relative to the stage) so Drive's viewer fits the page edge to edge; the
+           rotation then lands it exactly on the stage. Set rotate: 0 on a record if
+           its PDF is already stored upright. */
+        .pdf-stage { position: relative; width: 100%; overflow: hidden; background: #fff; }
+        .pdf-stage iframe { border: none; display: block; }
+        .pdf-stage-flat { aspect-ratio: 1.43 / 1; }
+        .pdf-stage-flat iframe { width: 100%; height: 100%; }
+        .pdf-stage-rot { aspect-ratio: 792 / 612; }
+        .pdf-stage-rot iframe {
+          position: absolute; top: 50%; left: 50%;
+          width: 77.27%; height: 129.41%;
+          transform: translate(-50%, -50%) rotate(90deg);
         }
         @media (max-width: 560px) {
           .verify-row { flex-direction: column; }
           .verify-card { padding: 24px 20px; }
-          .pdf-card iframe { aspect-ratio: 1.2 / 1; }
         }
       `}</style>
     </>

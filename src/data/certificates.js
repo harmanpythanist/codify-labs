@@ -16,6 +16,12 @@
 //      https://drive.google.com/file/d/FILE_ID/preview
 // 4. Add an entry to the matching list below.
 //
+// ORIENTATION
+// Certificates printed via "Print to PDF" are stored as a portrait page with
+// the artwork sideways on it. The verify page rotates them 90 degrees for
+// display, which is the default. If a PDF is already stored upright (a real
+// landscape page), add `rotate: 0` to its entry to turn that off.
+//
 // NOTE: everything in this file is public — it ships inside the
 // JavaScript bundle. Do not put anything here you would not put on
 // a public page. See README for moving this to a private sheet.
