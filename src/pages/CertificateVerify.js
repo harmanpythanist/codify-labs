@@ -177,11 +177,16 @@ export default function CertificateVerify({ type }) {
           display: flex; align-items: center; justify-content: space-between;
           gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--line);
         }
-        .pdf-card iframe { width: 100%; height: 560px; border: none; display: block; background: #fff; }
+        /* Certificates are landscape (~1.43:1). Match the frame to the page so the
+           Drive viewer fits it to width instead of letterboxing it. */
+        .pdf-card iframe {
+          width: 100%; aspect-ratio: 1.43 / 1; min-height: 340px;
+          border: none; display: block; background: #fff;
+        }
         @media (max-width: 560px) {
           .verify-row { flex-direction: column; }
           .verify-card { padding: 24px 20px; }
-          .pdf-card iframe { height: 420px; }
+          .pdf-card iframe { aspect-ratio: 1.2 / 1; }
         }
       `}</style>
     </>
