@@ -27,7 +27,7 @@ export const students = [
        name: 'Zunaira Khalid',
        course: 'AI & Machine Learning',
        date: 'August 25',
-       pdfUrl: 'https://drive.google.com/file/d/1Hy05x-vPKz2ZkVfPboADXab5Zc8jt5eH/view?usp=drive_link',
+       pdfUrl: 'https://drive.google.com/file/d/1Hy05x-vPKz2ZkVfPboADXab5Zc8jt5eH/preview',
    }
 ];
 

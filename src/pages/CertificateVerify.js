@@ -9,6 +9,22 @@ import {
 
 const DATA = { students, interns };
 
+// Google Drive refuses to render its /view page inside an iframe
+// (X-Frame-Options: SAMEORIGIN), so an entry pasted straight from the
+// "Copy link" button shows nothing. Normalise whatever form the link is
+// in: /preview for the embed, /view for the "Open" button.
+const DRIVE_FILE = /(?:\/file\/d\/|[?&]id=)([\w-]{10,})/;
+
+function driveUrls(url = '') {
+  const match = url.match(DRIVE_FILE);
+  if (!match) return { embed: url, open: url };
+  const id = match[1];
+  return {
+    embed: `https://drive.google.com/file/d/${id}/preview`,
+    open: `https://drive.google.com/file/d/${id}/view`,
+  };
+}
+
 export default function CertificateVerify({ type }) {
   const isStudent = type === 'students';
   const label = isStudent ? 'Student' : 'Intern';
@@ -124,7 +140,7 @@ export default function CertificateVerify({ type }) {
                 <div className="pdf-head">
                   <span className="card-title" style={{ fontSize: 'var(--text-sm)', marginBottom: 0 }}>Certificate PDF</span>
                   <a
-                    href={record.pdfUrl.replace('/preview', '/view')}
+                    href={driveUrls(record.pdfUrl).open}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn btn-secondary btn-sm"
@@ -132,7 +148,7 @@ export default function CertificateVerify({ type }) {
                     Open <IconExternal size={14} />
                   </a>
                 </div>
-                <iframe src={record.pdfUrl} title={`Certificate for ${record.name}`} loading="lazy" />
+                <iframe src={driveUrls(record.pdfUrl).embed} title={`Certificate for ${record.name}`} loading="lazy" />
               </div>
             </div>
           )}
