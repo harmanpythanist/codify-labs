@@ -22,12 +22,12 @@
 // ============================================================
 
 export const students = [
-  // {
-  //   code: 'STU-001',
-  //   name: 'Full Name',
-  //   course: 'AI & Machine Learning',
-  //   date: 'December 2024',
-  //   pdfUrl: 'https://drive.google.com/file/d/FILE_ID/preview',
+     {
+       code: '3520153324000',
+       name: 'Zunaira Khalid',
+       course: 'AI & Machine Learning',
+       date: 'August 25',
+       pdfUrl: 'https://drive.google.com/drive/folders/1xsW-BJuW-afJ7mLzSPXHftu8GEU6rnxx',
   // },
 ];
 
