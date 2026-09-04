@@ -32,11 +32,18 @@ export const students = [
 ];
 
 export const interns = [
-  // {
-  //   code: 'INT-001',
-  //   name: 'Full Name',
-  //   role: 'AI Engineer Intern',
-  //   date: 'December 2024',
-  //   pdfUrl: 'https://drive.google.com/file/d/FILE_ID/preview',
-  // },
+   {
+     code: '3520203699331',
+     name: 'Yashwa',
+     role: 'Website Development & Design',
+     date: '25 August 2026',
+     pdfUrl: 'https://drive.google.com/file/d/1kQP_BiMiqyNfc2yK3rDf66v-zoP9UIAE/view?usp=sharing',
+   },
+   {
+     code: '3460352356039',
+     name: 'Izhaan',
+     role: 'Computer Vision, ML, and Management',
+     date: '25 August 2026',
+     pdfUrl: 'https://drive.google.com/file/d/1bwP9fibjJWT7_S5RD0KDVpT0-wKUp_YX/view?usp=sharing',
+   }
 ];
