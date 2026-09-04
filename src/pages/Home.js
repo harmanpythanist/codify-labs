@@ -8,6 +8,7 @@ import { SERVICES } from '../data/services';
 import { PROJECTS } from '../data/projects';
 import {
   IconWhatsapp, IconArrowRight, IconGraduationCap, IconVideo, IconMapPin, IconBookOpen,
+  IconCheck,
 } from '../components/Icons';
 
 const HIGHLIGHTS = [
@@ -20,6 +21,17 @@ const HIGHLIGHTS = [
 // The five services we lead with on the homepage.
 const FEATURED = ['ai-machine-learning', 'computer-vision', 'ai-chatbots-nlp', 'website-development', 'data-analytics']
   .map(slug => SERVICES.find(s => s.slug === slug));
+
+// The project count gets its own hero badge, so the panel carries the rest.
+const HERO_PROOF = STATS.filter(s => s.label !== 'Projects Delivered');
+
+// How an engagement actually runs — the thing serious clients look for.
+const PROCESS = [
+  { step: '01', title: 'Discovery', text: 'We start with your problem, your data, and your constraints — never a template.' },
+  { step: '02', title: 'Scope & Plan', text: 'A written scope, architecture, and timeline you approve before a line of code is written.' },
+  { step: '03', title: 'Build & Review', text: 'Short build cycles with working demos, so you see real software instead of status reports.' },
+  { step: '04', title: 'Deliver & Support', text: 'Deployment, handover documentation, and continued support once you are live.' },
+];
 
 export default function Home() {
   useSeo({
@@ -45,16 +57,22 @@ export default function Home() {
             </span>
 
             <h1 className="h-display" data-reveal data-reveal-delay="80">
-              We Turn Ideas Into<br />
-              <span className="grad-text">Practical Software</span>
+              We provide<br />
+              <span className="grad-text">reliable solutions</span>
             </h1>
 
-            <p className="lede" data-reveal data-reveal-delay="160" style={{ marginTop: 20 }}>
-              At Codify Labs, we build AI-powered desktop applications, websites, and custom
-              AI solutions — for clients across {SITE.countries.slice(0, -1).join(', ')}, {SITE.countries.slice(-1)}, and more.
+            <p className="lede hero-lede" data-reveal data-reveal-delay="150">
+              AI and machine learning, websites, computer vision, chatbots,
+              image processing, data science.
             </p>
 
-            <div className="hero-actions" data-reveal data-reveal-delay="240">
+            <p className="proof-badge" data-reveal data-reveal-delay="210">
+              <span className="proof-pre">over</span>
+              <span className="proof-num">70+</span>
+              <span className="proof-text">projects done</span>
+            </p>
+
+            <div className="hero-actions" data-reveal data-reveal-delay="270">
               <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
                 <IconWhatsapp size={17} /> Get in Touch
               </a>
@@ -63,24 +81,37 @@ export default function Home() {
               </Link>
             </div>
 
-            <p className="hero-note" data-reveal data-reveal-delay="300">
-              Trusted by clients in {SITE.countries.length}+ countries · Usually replies within a day
+            <p className="hero-note" data-reveal data-reveal-delay="320">
+              Usually replies within a day · No obligation, no sales pressure
             </p>
           </div>
-        </div>
-      </section>
 
-      {/* --------------------------------------------------------- stats -- */}
-      <section className="section-sm">
-        <div className="container">
-          <div className="grid grid-4">
-            {STATS.map((s, i) => (
-              <div key={s.label} className="stat" data-reveal data-reveal-delay={i * 70}>
-                <span className="stat-value">{s.value}</span>
-                <span className="stat-label">{s.label}</span>
-              </div>
-            ))}
-          </div>
+          <aside className="hero-panel" data-reveal data-reveal-delay="200" aria-label="Codify Labs at a glance">
+            <div className="panel-head">
+              <span className="panel-dot" aria-hidden="true" />
+              At a glance
+            </div>
+
+            <dl className="panel-stats">
+              {HERO_PROOF.map(s => (
+                <div key={s.label} className="panel-stat">
+                  <dt>{s.label}</dt>
+                  <dd>{s.value}</dd>
+                </div>
+              ))}
+            </dl>
+
+            <div className="panel-divider" aria-hidden="true" />
+
+            <div className="panel-countries">
+              <span className="panel-label">Trusted by clients in</span>
+              <ul>
+                {SITE.countries.map(c => (
+                  <li key={c}><IconCheck size={13} /> {c}</li>
+                ))}
+              </ul>
+            </div>
+          </aside>
         </div>
       </section>
 
@@ -92,7 +123,7 @@ export default function Home() {
               <span className="eyebrow">About Us</span>
               <h2 className="h-section">Built by People Who've Shipped Real Products</h2>
               <p className="body-text" style={{ marginTop: 20 }}>
-                Before starting Codify Labs, our founder and team worked on 50+ projects in data science,
+                Before starting Codify Labs, our founder and team worked on 70+ projects in data science,
                 AI, and GUI application development for clients from Canada, Germany, the UK, Malaysia,
                 Kuwait, and other countries.
               </p>
@@ -154,6 +185,30 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ------------------------------------------------------- process -- */}
+      <section className="section bg-navy process">
+        <span className="process-glow" aria-hidden="true" />
+        <div className="container" style={{ position: 'relative' }}>
+          <div className="section-head">
+            <span className="eyebrow">How We Work</span>
+            <h2 className="h-section" style={{ color: '#fff' }}>A Process You Can Plan Around</h2>
+            <p className="lede process-lede">
+              Every engagement runs the same four steps, so you always know what happens next — and what it costs.
+            </p>
+          </div>
+
+          <ol className="process-grid">
+            {PROCESS.map((p, i) => (
+              <li key={p.step} className="process-step" data-reveal data-reveal-delay={i * 70}>
+                <span className="process-num">{p.step}</span>
+                <h3 className="process-title">{p.title}</h3>
+                <p className="process-text">{p.text}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
       {/* ------------------------------------------------------ projects -- */}
       <section className="section bg-soft">
         <div className="container">
@@ -175,6 +230,12 @@ export default function Home() {
               </Link>
             ))}
           </div>
+
+          <div className="projects-more" data-reveal>
+            <Link to="/projects" className="btn btn-secondary">
+              View all projects <IconArrowRight size={16} />
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -186,8 +247,8 @@ export default function Home() {
         .hero {
           position: relative; overflow: hidden;
           display: flex; align-items: center;
-          min-height: min(86vh, 760px);
-          padding: 72px 0 64px;
+          min-height: min(88vh, 780px);
+          padding: 76px 0 72px;
           background: linear-gradient(168deg, var(--bg-tint) 0%, var(--bg-soft) 55%, var(--bg) 100%);
         }
         .hero-blob { position: absolute; pointer-events: none; }
@@ -208,8 +269,13 @@ export default function Home() {
           -webkit-mask-image: radial-gradient(ellipse 74% 74% at 50% 46%, #000, transparent);
           mask-image: radial-gradient(ellipse 74% 74% at 50% 46%, #000, transparent);
         }
-        .hero-inner { position: relative; }
-        .hero-copy { max-width: 760px; }
+        .hero-inner {
+          position: relative;
+          display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+          gap: 60px; align-items: center;
+        }
+        .hero-copy { max-width: 640px; }
+        .hero-lede { margin-top: 20px; max-width: 46ch; }
 
         .hero-badge {
           display: inline-flex; align-items: center; gap: 9px;
@@ -229,24 +295,80 @@ export default function Home() {
           -webkit-background-clip: text; background-clip: text;
           -webkit-text-fill-color: transparent; color: transparent;
         }
-        .hero-actions { display: flex; gap: 13px; flex-wrap: wrap; margin-top: 36px; }
-        .hero-note { margin-top: 22px; font-size: var(--text-xs); color: var(--ink-3); }
 
-        .stat {
-          background: linear-gradient(150deg, var(--bg-soft), var(--bg-tint));
-          border: 1px solid var(--line);
-          border-radius: var(--r-lg);
-          padding: 28px 22px; text-align: center;
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        /* --- project-count badge: serif italic on a navy plate --- */
+        .proof-badge {
+          display: inline-flex; align-items: baseline; gap: 10px;
+          margin-top: 26px;
+          padding: 11px 24px 12px;
+          border-radius: var(--r-pill);
+          background: linear-gradient(132deg, var(--navy-800) 0%, var(--navy-700) 58%, var(--blue-800) 100%);
+          border: 1px solid rgba(255,255,255,0.12);
+          box-shadow: 0 10px 26px rgba(19,32,72,0.28);
+          font-family: var(--font-accent);
+          font-style: italic;
+          color: #fff;
+          line-height: 1;
         }
-        .stat:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
-        .stat-value {
+        .proof-pre {
+          font-size: var(--text-sm); color: rgba(255,255,255,0.68);
+          letter-spacing: 0.01em;
+        }
+        .proof-num {
+          font-size: 1.85rem; font-weight: 600; letter-spacing: -0.01em;
+          color: var(--amber-500);
+          text-shadow: 0 1px 12px rgba(227,154,43,0.35);
+        }
+        .proof-text { font-size: var(--text-lg); font-weight: 500; color: #fff; }
+
+        .hero-actions { display: flex; gap: 13px; flex-wrap: wrap; margin-top: 32px; }
+        .hero-note { margin-top: 20px; font-size: var(--text-xs); color: var(--ink-3); }
+
+        /* ------------------------------------------------- hero panel -- */
+        .hero-panel {
+          background: rgba(255,255,255,0.82);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          border: 1px solid var(--line-2);
+          border-radius: var(--r-xl);
+          padding: 26px 28px 24px;
+          box-shadow: var(--shadow-lg);
+        }
+        .panel-head {
+          display: flex; align-items: center; gap: 9px;
+          font-family: var(--font-head); font-size: var(--text-xs); font-weight: 700;
+          letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3);
+          padding-bottom: 16px;
+        }
+        .panel-dot {
+          width: 7px; height: 7px; border-radius: 50%; background: var(--success);
+          box-shadow: 0 0 0 3px rgba(23,128,61,0.14);
+        }
+        .panel-stats { display: flex; flex-direction: column; }
+        .panel-stat {
+          display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+          padding: 13px 0;
+          border-top: 1px solid var(--line);
+        }
+        .panel-stat dt { font-size: var(--text-sm); color: var(--ink-2); font-weight: 500; }
+        .panel-stat dd {
+          font-family: var(--font-head); font-size: 1.6rem; font-weight: 800;
+          color: var(--navy-700); letter-spacing: -0.03em;
+          font-variant-numeric: tabular-nums; line-height: 1;
+        }
+        .panel-divider { height: 1px; background: var(--line); margin: 18px 0 16px; }
+        .panel-label {
           display: block;
-          font-family: var(--font-head); font-size: 2.4rem; font-weight: 800;
-          color: var(--blue-700); line-height: 1; margin-bottom: 8px;
-          font-variant-numeric: tabular-nums; letter-spacing: -0.03em;
+          font-family: var(--font-head); font-size: var(--text-xs); font-weight: 700;
+          letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3);
+          margin-bottom: 12px;
         }
-        .stat-label { font-size: var(--text-xs); color: var(--ink-2); font-weight: 600; }
+        .panel-countries ul { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+        .panel-countries li {
+          display: inline-flex; align-items: center; gap: 6px;
+          font-size: var(--text-sm); font-weight: 600; color: var(--ink);
+        }
+        .panel-countries svg { color: var(--blue-700); flex-shrink: 0; }
 
         .about-split {
           display: grid; grid-template-columns: 1.15fr 1fr; gap: 56px; align-items: start;
@@ -271,15 +393,62 @@ export default function Home() {
         .card-all .link-arrow { color: var(--blue-500); }
         .card-all:hover { border-color: var(--blue-500); }
 
-        .project-preview .kicker { margin-top: 2px; }
+        /* ---------------------------------------------------- process -- */
+        .process { position: relative; overflow: hidden; }
+        .process-glow {
+          position: absolute; top: -180px; right: -140px;
+          width: 520px; height: 520px; border-radius: 50%;
+          background: radial-gradient(circle, rgba(74,141,253,0.22) 0%, transparent 68%);
+          pointer-events: none;
+        }
+        .process-lede { color: rgba(255,255,255,0.74); }
+        .process-grid {
+          display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+          gap: 20px;
+        }
+        .process-step {
+          position: relative;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.12);
+          border-radius: var(--r-lg);
+          padding: 26px 24px 28px;
+          transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+        }
+        .process-step:hover {
+          transform: translateY(-5px);
+          background: rgba(255,255,255,0.09);
+          border-color: var(--blue-500);
+        }
+        .process-num {
+          display: block;
+          font-family: var(--font-accent); font-style: italic;
+          font-size: 2.1rem; font-weight: 600; line-height: 1;
+          color: var(--blue-500); margin-bottom: 16px;
+        }
+        .process-title {
+          font-family: var(--font-head); font-size: var(--text-lg); font-weight: 700;
+          color: #fff; margin-bottom: 9px; letter-spacing: -0.01em;
+        }
+        .process-text { font-size: var(--text-sm); color: rgba(255,255,255,0.7); line-height: 1.7; }
 
+        .project-preview .kicker { margin-top: 2px; }
+        .projects-more { display: flex; justify-content: center; margin-top: 36px; }
+
+        @media (max-width: 1000px) {
+          .hero-inner { grid-template-columns: 1fr; gap: 40px; }
+          .hero-copy { max-width: 720px; }
+          .hero-panel { max-width: 520px; }
+        }
         @media (max-width: 860px) {
           .about-split { grid-template-columns: 1fr; gap: 36px; }
         }
         @media (max-width: 640px) {
           .hero { min-height: auto; padding: 48px 0 52px; }
           .hero-actions .btn { flex: 1 1 100%; }
-          .stat-value { font-size: 2rem; }
+          .proof-badge { padding: 10px 20px 11px; }
+          .proof-num { font-size: 1.6rem; }
+          .hero-panel { padding: 22px 20px 20px; }
+          .panel-stat dd { font-size: 1.4rem; }
         }
       `}</style>
     </>

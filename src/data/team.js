@@ -17,11 +17,11 @@ export const FOUNDER = {
   role: 'Founder & CEO',
   photo: '/team/harman-waheed.jpg',
   bio: [
-    'Harman founded Codify Labs after shipping 50+ projects in data science, AI, and desktop application development for clients across Canada, Germany, the UK, Malaysia, and Kuwait.',
+    'Harman founded Codify Labs after shipping 70+ projects in data science, AI, and desktop application development for clients across Canada, Germany, the UK, Malaysia, and Kuwait.',
     'Alongside client work, he teaches — publishing Udemy courses now taken by 8,000+ students, running the internship programme, and writing a practical machine learning book for students and beginners.',
   ],
   highlights: [
-    '50+ projects delivered across 6+ countries',
+    '70+ projects delivered across 6+ countries',
     '8,000+ students taught on Udemy',
     'Author, Machine Learning with Python',
   ],

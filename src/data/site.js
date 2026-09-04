@@ -68,7 +68,7 @@ export function whatsappLink(message) {
 export const MAILTO = `mailto:${SITE.email}`;
 
 export const STATS = [
-  { value: '50+', label: 'Projects Delivered' },
+  { value: '70+', label: 'Projects Delivered' },
   { value: '8K+', label: 'Udemy Students' },
   { value: '6+', label: 'Countries Served' },
   { value: '3+', label: 'Years Experience' },

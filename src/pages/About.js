@@ -17,7 +17,7 @@ const VALUES = [
 ];
 
 const JOURNEY = [
-  { year: 'Start', text: 'Founded by a team who had already shipped 50+ projects in AI, data science, and GUI application development.' },
+  { year: 'Start', text: 'Founded by a team who had already shipped 70+ projects in AI, data science, and GUI application development.' },
   { year: 'Growth', text: 'Took on clients across Canada, Germany, the UK, Malaysia, Kuwait, and more.' },
   { year: 'Education', text: 'Launched Udemy courses and a structured internship program, now serving 8,000+ students.' },
   { year: 'Today', text: 'Codify Labs builds AI-powered software for businesses while continuing to train the next generation of AI/software talent.' },
