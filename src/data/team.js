@@ -21,7 +21,7 @@ export const FOUNDER = {
     'Alongside client work, he teaches — publishing Udemy courses now taken by 8,000+ students, running the internship programme, and writing a practical machine learning book for students and beginners.',
   ],
   highlights: [
-    '70+ projects delivered across 6+ countries',
+    '70+ projects delivered across 9+ countries',
     '8,000+ students taught on Udemy',
     'Author, Machine Learning with Python',
   ],

@@ -15,7 +15,7 @@ const HIGHLIGHTS = [
   { label: 'Published Author', desc: 'Our founder wrote the practical Python machine learning guide', icon: IconBookOpen },
   { label: 'Udemy Courses', desc: '8,000+ students enrolled, positive global reviews', icon: IconVideo },
   { label: 'Internship Program', desc: 'Hands-on internship with real project experience', icon: IconGraduationCap },
-  { label: 'Client Retention', desc: 'Many clients across 6+ countries continue to return', icon: IconMapPin },
+  { label: 'Client Retention', desc: 'Many clients across 9+ countries continue to return', icon: IconMapPin },
 ];
 
 // The five services we lead with on the homepage.
@@ -298,9 +298,10 @@ export default function Home() {
 
         /* --- project-count badge: serif italic on a navy plate --- */
         .proof-badge {
-          display: inline-flex; align-items: baseline; gap: 10px;
-          margin-top: 26px;
-          padding: 11px 24px 12px;
+          position: relative; overflow: hidden;
+          display: inline-flex; align-items: baseline; gap: 13px;
+          margin-top: 30px;
+          padding: 15px 32px 17px;
           border-radius: var(--r-pill);
           background: linear-gradient(132deg, var(--navy-800) 0%, var(--navy-700) 58%, var(--blue-800) 100%);
           border: 1px solid rgba(255,255,255,0.12);
@@ -309,17 +310,38 @@ export default function Home() {
           font-style: italic;
           color: #fff;
           line-height: 1;
+          cursor: default;
+          transition: transform 0.28s cubic-bezier(0.22,0.8,0.3,1), box-shadow 0.28s ease, border-color 0.28s ease;
         }
+        /* A light sweep that runs across the plate on hover. */
+        .proof-badge::after {
+          content: ''; position: absolute; inset: 0;
+          background: linear-gradient(105deg, transparent 38%, rgba(255,255,255,0.16) 50%, transparent 62%);
+          transform: translateX(-120%);
+          transition: transform 0.7s cubic-bezier(0.22,0.8,0.3,1);
+          pointer-events: none;
+        }
+        .proof-badge:hover {
+          transform: translateY(-4px);
+          border-color: rgba(227,154,43,0.5);
+          box-shadow: 0 18px 40px rgba(19,32,72,0.36), 0 0 0 1px rgba(227,154,43,0.18);
+        }
+        .proof-badge:hover::after { transform: translateX(120%); }
         .proof-pre {
-          font-size: var(--text-sm); color: rgba(255,255,255,0.68);
+          font-size: var(--text-base); color: rgba(255,255,255,0.7);
           letter-spacing: 0.01em;
         }
         .proof-num {
-          font-size: 1.85rem; font-weight: 600; letter-spacing: -0.01em;
+          font-size: 2.7rem; font-weight: 700; letter-spacing: -0.015em;
           color: var(--amber-500);
-          text-shadow: 0 1px 12px rgba(227,154,43,0.35);
+          text-shadow: 0 1px 14px rgba(227,154,43,0.38);
+          transition: color 0.28s ease, text-shadow 0.28s ease;
         }
-        .proof-text { font-size: var(--text-lg); font-weight: 500; color: #fff; }
+        .proof-badge:hover .proof-num {
+          color: #F3B75E;
+          text-shadow: 0 1px 20px rgba(227,154,43,0.55);
+        }
+        .proof-text { font-size: 1.4rem; font-weight: 500; color: #fff; }
 
         .hero-actions { display: flex; gap: 13px; flex-wrap: wrap; margin-top: 32px; }
         .hero-note { margin-top: 20px; font-size: var(--text-xs); color: var(--ink-3); }
@@ -333,6 +355,12 @@ export default function Home() {
           border-radius: var(--r-xl);
           padding: 26px 28px 24px;
           box-shadow: var(--shadow-lg);
+          transition: transform 0.28s cubic-bezier(0.22,0.8,0.3,1), box-shadow 0.28s ease, border-color 0.28s ease;
+        }
+        .hero-panel:hover {
+          transform: translateY(-5px);
+          border-color: var(--blue-500);
+          box-shadow: 0 22px 48px rgba(15,23,41,0.14), 0 6px 12px rgba(15,23,41,0.05);
         }
         .panel-head {
           display: flex; align-items: center; gap: 9px;
@@ -347,15 +375,22 @@ export default function Home() {
         .panel-stats { display: flex; flex-direction: column; }
         .panel-stat {
           display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
-          padding: 13px 0;
+          padding: 13px 10px 13px 12px;
+          margin: 0 -10px 0 -12px;
           border-top: 1px solid var(--line);
+          border-radius: 10px;
+          transition: background-color 0.2s ease, transform 0.2s ease;
         }
-        .panel-stat dt { font-size: var(--text-sm); color: var(--ink-2); font-weight: 500; }
+        .panel-stat:hover { background: var(--bg-tint); transform: translateX(3px); }
+        .panel-stat dt { font-size: var(--text-sm); color: var(--ink-2); font-weight: 500; transition: color 0.2s ease; }
+        .panel-stat:hover dt { color: var(--ink); }
         .panel-stat dd {
           font-family: var(--font-head); font-size: 1.6rem; font-weight: 800;
           color: var(--navy-700); letter-spacing: -0.03em;
           font-variant-numeric: tabular-nums; line-height: 1;
+          transition: color 0.2s ease;
         }
+        .panel-stat:hover dd { color: var(--blue-700); }
         .panel-divider { height: 1px; background: var(--line); margin: 18px 0 16px; }
         .panel-label {
           display: block;
@@ -367,7 +402,9 @@ export default function Home() {
         .panel-countries li {
           display: inline-flex; align-items: center; gap: 6px;
           font-size: var(--text-sm); font-weight: 600; color: var(--ink);
+          transition: color 0.2s ease, transform 0.2s ease;
         }
+        .panel-countries li:hover { color: var(--blue-700); transform: translateY(-2px); }
         .panel-countries svg { color: var(--blue-700); flex-shrink: 0; }
 
         .about-split {
@@ -445,8 +482,10 @@ export default function Home() {
         @media (max-width: 640px) {
           .hero { min-height: auto; padding: 48px 0 52px; }
           .hero-actions .btn { flex: 1 1 100%; }
-          .proof-badge { padding: 10px 20px 11px; }
-          .proof-num { font-size: 1.6rem; }
+          .proof-badge { padding: 12px 22px 14px; gap: 10px; }
+          .proof-pre { font-size: var(--text-sm); }
+          .proof-num { font-size: 2.05rem; }
+          .proof-text { font-size: 1.12rem; }
           .hero-panel { padding: 22px 20px 20px; }
           .panel-stat dd { font-size: 1.4rem; }
         }

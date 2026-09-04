@@ -41,7 +41,7 @@
   /* Type */
   --font-head: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-body: 'Outfit', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-accent: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-accent: 'Fraunces', 'Playfair Display', Georgia, 'Times New Roman', serif;
 
   --text-xs:   0.8125rem;  /* 13px — smallest allowed */
   --text-sm:   0.9375rem;  /* 15px — body floor */

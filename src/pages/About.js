@@ -26,7 +26,7 @@ const JOURNEY = [
 export default function About() {
   useSeo({
     title: 'About Us',
-    description: `Codify Labs is led by ${FOUNDER.name}, and builds AI-powered software for businesses across six countries — while training the next generation of AI and software talent.`,
+    description: `Codify Labs is led by ${FOUNDER.name}, and builds AI-powered software for businesses across nine countries — while training the next generation of AI and software talent.`,
     path: '/about',
   });
   useReveal();

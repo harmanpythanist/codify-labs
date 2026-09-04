@@ -25,7 +25,7 @@ export const SITE = {
     linkedin: 'https://www.linkedin.com/company/codifyylabs/',
   },
 
-  countries: ['Canada', 'Germany', 'UK', 'Malaysia', 'Kuwait'],
+  countries: ['Canada', 'Germany', 'UK', 'USA', 'Malaysia', 'Kuwait', 'India', 'Pakistan', 'Philippines'],
 
   // ----------------------------------------------------------------
   // YOUR LOGO FILE
@@ -70,6 +70,6 @@ export const MAILTO = `mailto:${SITE.email}`;
 export const STATS = [
   { value: '70+', label: 'Projects Delivered' },
   { value: '8K+', label: 'Udemy Students' },
-  { value: '6+', label: 'Countries Served' },
+  { value: '9+', label: 'Countries Served' },
   { value: '3+', label: 'Years Experience' },
 ];
