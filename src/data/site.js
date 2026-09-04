@@ -25,7 +25,7 @@ export const SITE = {
     linkedin: 'https://www.linkedin.com/company/codifyylabs/',
   },
 
-  countries: ['Canada', 'Germany', 'UK', 'USA', 'Malaysia', 'Kuwait', 'India', 'Pakistan', 'Philippines'],
+  countries: ['Pakistan', 'Canada', 'Germany', 'UK', 'USA', 'Malaysia', 'Kuwait', 'India', 'Philippines'],
 
   // ----------------------------------------------------------------
   // YOUR LOGO FILE

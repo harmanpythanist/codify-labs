@@ -313,6 +313,14 @@ export default function Home() {
           cursor: default;
           transition: transform 0.28s cubic-bezier(0.22,0.8,0.3,1), box-shadow 0.28s ease, border-color 0.28s ease;
         }
+        /* A slow sheen that drifts across the plate on its own, then rests. */
+        .proof-badge::before {
+          content: ''; position: absolute; inset: 0;
+          background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.10) 50%, transparent 60%);
+          transform: translateX(-130%);
+          animation: badge-sheen 7s ease-in-out infinite;
+          pointer-events: none;
+        }
         /* A light sweep that runs across the plate on hover. */
         .proof-badge::after {
           content: ''; position: absolute; inset: 0;
@@ -334,12 +342,18 @@ export default function Home() {
         .proof-num {
           font-size: 2.7rem; font-weight: 700; letter-spacing: -0.015em;
           color: var(--amber-500);
-          text-shadow: 0 1px 14px rgba(227,154,43,0.38);
-          transition: color 0.28s ease, text-shadow 0.28s ease;
+          animation: num-glow 3.6s ease-in-out infinite;
+          transition: color 0.28s ease;
         }
-        .proof-badge:hover .proof-num {
-          color: #F3B75E;
-          text-shadow: 0 1px 20px rgba(227,154,43,0.55);
+        .proof-badge:hover .proof-num { color: #F3B75E; }
+
+        @keyframes badge-sheen {
+          0%        { transform: translateX(-130%); }
+          22%, 100% { transform: translateX(130%); }
+        }
+        @keyframes num-glow {
+          0%, 100% { text-shadow: 0 1px 14px rgba(227,154,43,0.34); }
+          50%      { text-shadow: 0 1px 22px rgba(227,154,43,0.60); }
         }
         .proof-text { font-size: 1.4rem; font-weight: 500; color: #fff; }
 
