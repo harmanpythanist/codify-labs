@@ -45,5 +45,19 @@ export const interns = [
      role: 'Computer Vision, ML, and Management',
      date: '25 August 2026',
      pdfUrl: 'https://drive.google.com/file/d/1bwP9fibjJWT7_S5RD0KDVpT0-wKUp_YX/view?usp=sharing',
+   },
+   {
+     code: '3520184995070',
+     name: 'Hijab',
+     role: 'Software and App development',
+     date: '25 August 2026',
+     pdfUrl: 'https://drive.google.com/file/d/1wwM7qg2ZRZayt3FusT5OfWgo16FPdA_d/view?usp=sharing',
+   },
+   {
+     code: '3520123492636',
+     name: 'Hifza',
+     role: 'Development and Research in Python',
+     date: '25 August 2026',
+     pdfUrl: 'https://drive.google.com/file/d/1Lp3BYPSXkoD0viBB1jM2K8JR-ulHS4nD/view?usp=sharing',
    }
 ];
