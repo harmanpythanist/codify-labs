@@ -31,8 +31,84 @@
  */
 
 const crypto = require('crypto');
+const https = require('https');
 
 const DEFAULT_PATH = '/h264/ch1/main/av_stream';
+
+/**
+ * POSTs JSON, and works around a name this deployment cannot resolve.
+ *
+ * Tailscale's *.ts.net records are not visible to every resolver: Google's
+ * returns the Funnel address while Cloudflare's returns NXDOMAIN for the same
+ * name, and Vercel's behaves like Cloudflare's, so the ordinary request fails
+ * with ENOTFOUND however long you wait.
+ *
+ * So: try normally first, and only if the name cannot be resolved, look it up
+ * over DNS-over-HTTPS and connect straight to the address. TLS still verifies
+ * the certificate against the original hostname, because `servername` sets SNI
+ * -- this bypasses the broken lookup, not the encryption.
+ */
+async function postJson(url, headers, body, signal) {
+  try {
+    const res = await fetch(url, { method: 'POST', headers, body, signal });
+    return { status: res.status, json: await res.json().catch(() => ({})) };
+  } catch (err) {
+    const dnsFailed = /ENOTFOUND|EAI_AGAIN/.test(
+      `${err.message} ${err.cause && err.cause.message ? err.cause.message : ''}`
+    );
+    if (!dnsFailed) throw err;
+
+    const target = new URL(url);
+    const address = await resolveOverHttps(target.hostname);
+    if (!address) throw err;
+
+    return requestByAddress(target, address, headers, body, signal);
+  }
+}
+
+/** First A record for `hostname`, via Google's DoH endpoint, or null. */
+async function resolveOverHttps(hostname) {
+  const res = await fetch(
+    `https://dns.google/resolve?name=${encodeURIComponent(hostname)}&type=A`,
+    { headers: { accept: 'application/dns-json' } }
+  );
+  if (!res.ok) return null;
+  const data = await res.json();
+  const answer = (data.Answer || []).find(a => a.type === 1 && a.data);
+  return answer ? answer.data : null;
+}
+
+/** The same POST, but aimed at a known address with SNI set to the hostname. */
+function requestByAddress(target, address, headers, body, signal) {
+  return new Promise((resolve, reject) => {
+    const req = https.request(
+      {
+        host: address,
+        servername: target.hostname, // SNI, and what the certificate is checked against
+        port: target.port || 443,
+        path: target.pathname + target.search,
+        method: 'POST',
+        headers: { ...headers, Host: target.hostname },
+        timeout: 15000,
+      },
+      (res) => {
+        let raw = '';
+        res.setEncoding('utf8');
+        res.on('data', chunk => { raw += chunk; });
+        res.on('end', () => {
+          let json = {};
+          try { json = JSON.parse(raw); } catch { /* leave empty */ }
+          resolve({ status: res.statusCode, json });
+        });
+      }
+    );
+
+    req.on('error', reject);
+    req.on('timeout', () => req.destroy(new Error('the relay did not answer in time')));
+    if (signal) signal.addEventListener('abort', () => req.destroy(new Error('aborted')), { once: true });
+    req.end(body);
+  });
+}
 
 /**
  * Crude brute-force brake.
@@ -133,21 +209,21 @@ module.exports = async (req, res) => {
 
   let response;
   try {
-    response = await fetch(`${relay}/session`, {
-      method: 'POST',
-      signal: abort.signal,
-      headers: {
+    response = await postJson(
+      `${relay}/session`,
+      {
         'Content-Type': 'application/json',
         'X-Relay-Token': RELAY_TOKEN,
       },
-      body: JSON.stringify({
+      JSON.stringify({
         ip: CAMERA_IP,
         username: CAMERA_USERNAME || '',
         password: CAMERA_PASSWORD || '',
         path: CAMERA_PATH || DEFAULT_PATH,
         width: Number(CAMERA_WIDTH) || 640,
       }),
-    });
+      abort.signal,
+    );
   } catch (err) {
     if (err.name === 'AbortError') {
       return res.status(502).json({
@@ -166,14 +242,9 @@ module.exports = async (req, res) => {
     clearTimeout(timer);
   }
 
-  let data = {};
-  try {
-    data = await response.json();
-  } catch {
-    /* handled by the status check below */
-  }
+  const data = response.json || {};
 
-  if (!response.ok) {
+  if (response.status < 200 || response.status >= 300) {
     // Pass the relay's own message through -- it distinguishes "camera
     // unreachable" from "wrong relay token" -- but never leak the token.
     return res.status(502).json({ error: data.error || 'The relay refused the connection.' });
