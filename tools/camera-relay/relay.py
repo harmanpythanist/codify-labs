@@ -43,6 +43,7 @@ import argparse
 import hmac
 import json
 import secrets
+import sys
 import threading
 import time
 from http import HTTPStatus
@@ -533,6 +534,15 @@ def main() -> None:
                         help='Access token required to open a session. Generated and '
                              'printed if omitted. Pass one to keep it stable across restarts.')
     args = parser.parse_args()
+
+    # Line-buffer stdout. Python block-buffers it whenever output is not a
+    # terminal, so when the relay is started with its output redirected to a
+    # file or a service manager, the access token below would otherwise sit
+    # invisible in the buffer.
+    try:
+        sys.stdout.reconfigure(line_buffering=True)
+    except AttributeError:  # pragma: no cover - Python < 3.7
+        pass
 
     global GUARD
     token = args.token or secrets.token_urlsafe(12)
