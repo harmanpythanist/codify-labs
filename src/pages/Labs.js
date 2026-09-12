@@ -42,7 +42,10 @@ function Gate({ onUnlock }) {
     }
 
     if (hash === LABS.passwordHash) {
-      onUnlock();
+      // Hand the password on so the camera can authenticate against the
+      // server, which is the check that actually protects anything. It is kept
+      // in memory for this page only and never stored.
+      onUnlock(value);
     } else {
       setState('wrong');
       setValue('');
@@ -130,6 +133,16 @@ function Gate({ onUnlock }) {
   );
 }
 
+/**
+ * The password for this tab, held in a module variable.
+ *
+ * It has to outlive the component, because navigating to another page and back
+ * unmounts it -- but it must not be written to sessionStorage or anywhere else
+ * on disk. A reload therefore asks again, which is the right trade now that the
+ * password is what authenticates to the server rather than just hiding a page.
+ */
+let tabPassword = '';
+
 function LabsContent({ onLock }) {
   return (
     <>
@@ -145,7 +158,7 @@ function LabsContent({ onLock }) {
 
       <section className="section">
         <div className="container">
-          <CameraFeed />
+          <CameraFeed labsPassword={tabPassword} />
         </div>
       </section>
     </>
@@ -160,23 +173,17 @@ export default function Labs() {
   });
   useNoIndex();
 
-  // Read the unlock flag once, synchronously, so an already-unlocked tab does
-  // not flash the password form on every navigation back to /labs.
-  const [unlocked, setUnlocked] = useState(() => {
-    try {
-      return sessionStorage.getItem(LABS.storageKey) === '1';
-    } catch {
-      return false; // private mode / storage disabled
-    }
-  });
+  // Read synchronously so navigating back to /labs within the site does not
+  // flash the password form. A reload clears it and asks again.
+  const [unlocked, setUnlocked] = useState(() => Boolean(tabPassword));
 
-  const unlock = useCallback(() => {
-    try { sessionStorage.setItem(LABS.storageKey, '1'); } catch { /* not fatal */ }
+  const unlock = useCallback((password) => {
+    tabPassword = password;
     setUnlocked(true);
   }, []);
 
   const lock = useCallback(() => {
-    try { sessionStorage.removeItem(LABS.storageKey); } catch { /* not fatal */ }
+    tabPassword = '';
     setUnlocked(false);
   }, []);
 

@@ -25,9 +25,6 @@ export const LABS = {
   // sha256('earthisroundnotflat')
   passwordHash: '02475c1f027422cac823c4b4a62e01c9840d6d5fd5134e3cdff69b0500ff84bd',
 
-  // Unlock lasts for the browser tab's session only; closing the tab re-locks.
-  storageKey: 'codifylabs.labs.unlocked',
-
   // Where tools/camera-relay/relay.py listens. Browsers cannot open rtsp://,
   // so the camera feed has to come through that relay; see its docstring.
   relayUrl: 'http://127.0.0.1:8477',

@@ -16,7 +16,7 @@ import {
  * Nothing is written to localStorage, sessionStorage, the URL, or the relay's
  * log, and no frame is recorded anywhere.
  */
-export default function CameraFeed() {
+export default function CameraFeed({ labsPassword = '' }) {
   const [form, setForm] = useState({
     relay: LABS.relayUrl,
     token: '',
@@ -31,6 +31,12 @@ export default function CameraFeed() {
   const [status, setStatus] = useState('idle'); // idle | connecting | live | error
   const [error, setError] = useState('');
   const [session, setSession] = useState(null); // { id, relay, cacheBust }
+
+  // 'server'  -> the camera details live in Vercel's environment variables and
+  //              the page never sees them; nothing to fill in.
+  // 'manual'  -> type everything in. Used locally, and whenever the server
+  //              side is not configured.
+  const [source, setSource] = useState(labsPassword ? 'server' : 'manual');
 
   const sessionRef = useRef(null);
   sessionRef.current = session;
@@ -50,6 +56,68 @@ export default function CameraFeed() {
 
   // Leaving the page must not leave the camera streaming.
   useEffect(() => () => closeSession(sessionRef.current), [closeSession]);
+
+  /**
+   * Ask our own server to open the session. It holds the camera details and
+   * the relay token, so nothing secret passes through the browser.
+   */
+  const connectViaServer = useCallback(async () => {
+    setError('');
+    setStatus('connecting');
+
+    const abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(), 25000);
+
+    let res;
+    try {
+      res = await fetch('/api/labs/session', {
+        method: 'POST',
+        signal: abort.signal,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: labsPassword }),
+      });
+    } catch {
+      setStatus('error');
+      setError('Could not reach the site’s own server. Check your internet connection.');
+      return;
+    } finally {
+      clearTimeout(timer);
+    }
+
+    let data = {};
+    try {
+      data = await res.json();
+    } catch {
+      /* handled below */
+    }
+
+    // 501 means nobody has set the environment variables yet (or we are on the
+    // local dev server, which has no functions). Fall back to the manual form
+    // rather than leaving the page stuck.
+    if (res.status === 501 || res.status === 404) {
+      setSource('manual');
+      setStatus('idle');
+      return;
+    }
+
+    if (!res.ok) {
+      setStatus('error');
+      setError(data.error || `Could not start the camera (HTTP ${res.status}).`);
+      return;
+    }
+
+    setSession({ id: data.id, relay: data.relayUrl, cacheBust: Date.now() });
+    setStatus('live');
+  }, [labsPassword]);
+
+  // In server mode the whole point is that there is nothing to fill in, so
+  // connect as soon as the section opens.
+  useEffect(() => {
+    if (source === 'server' && !sessionRef.current && status === 'idle') {
+      connectViaServer();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [source]);
 
   const connect = async (e) => {
     e.preventDefault();
@@ -136,6 +204,62 @@ export default function CameraFeed() {
     <div className="cam">
       <div className="cam-grid">
         {/* ------------------------------------------------------- form -- */}
+        {source === 'server' ? (
+          <div className="cam-form card">
+            <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+              <IconVideo size={19} /> Camera
+            </h3>
+
+            <p className="card-text" style={{ marginBottom: 18 }}>
+              {status === 'live'
+                ? 'Connected. The camera details are held on the server, not in this page.'
+                : status === 'connecting'
+                  ? 'Starting the camera…'
+                  : 'Not connected.'}
+            </p>
+
+            {error && (
+              <p className="cam-error" role="alert">
+                <IconAlert size={15} /> <span>{error}</span>
+              </p>
+            )}
+
+            <div className="cam-actions">
+              <button
+                type="button"
+                className="btn btn-primary btn-block"
+                onClick={connectViaServer}
+                disabled={connecting}
+              >
+                {connecting
+                  ? <><IconSpinner size={16} className="spin" /> Connecting…</>
+                  : <><IconVideo size={16} /> {session ? 'Reconnect' : 'Connect'}</>}
+              </button>
+              {session && (
+                <button type="button" className="btn btn-secondary btn-block" onClick={disconnect}>
+                  <IconClose size={16} /> Disconnect
+                </button>
+              )}
+            </div>
+
+            <button
+              type="button"
+              className="cam-advanced-toggle"
+              style={{ marginTop: 16, marginBottom: 0 }}
+              onClick={() => { disconnect(); setSource('manual'); }}
+            >
+              Use a different camera →
+            </button>
+
+            <p className="cam-privacy">
+              <IconLock size={13} />
+              <span>
+                The camera address and password are stored on the server and never
+                sent to this page. Nothing is recorded.
+              </span>
+            </p>
+          </div>
+        ) : (
         <form className="cam-form card" onSubmit={connect}>
           <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
             <IconVideo size={19} /> Camera
@@ -273,6 +397,7 @@ export default function CameraFeed() {
             </span>
           </p>
         </form>
+        )}
 
         {/* ------------------------------------------------------ viewer -- */}
         <div className="cam-viewer">

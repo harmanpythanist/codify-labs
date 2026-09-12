@@ -2,6 +2,10 @@
 
 Shows an EZVIZ (or any RTSP) camera live on the private `/labs` page.
 
+> **Setting this up permanently?** See [SETUP.md](SETUP.md) — a fixed address,
+> auto-start at logon, and the camera's credentials held on the server so the
+> page needs nothing typed into it. This file covers running the relay by hand.
+
 ## Why a relay is needed
 
 **Browsers cannot play RTSP.** Chrome, Firefox and Safari have no `rtsp://`
