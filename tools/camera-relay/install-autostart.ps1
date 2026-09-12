@@ -25,9 +25,15 @@
   For a cloudflared named tunnel:          tunnel run --url http://127.0.0.1:8477 my-tunnel
 
 .EXAMPLE
+  # With Tailscale Funnel, only the relay needs a task -- Funnel's own config
+  # survives a reboot, so there is no tunnel command to re-run.
+  .\install-autostart.ps1 -Token 'a-long-random-token'
+
+.EXAMPLE
+  # With cloudflared, which must be launched each time.
   .\install-autostart.ps1 -Token 'a-long-random-token' `
-      -TunnelCommand 'C:\Program Files\Tailscale\tailscale.exe' `
-      -TunnelArgs 'funnel 8477'
+      -TunnelCommand 'C:\Program Files (x86)\cloudflared\cloudflared.exe' `
+      -TunnelArgs 'tunnel run --url http://127.0.0.1:8477 my-tunnel'
 
 .EXAMPLE
   # Remove both tasks again
@@ -63,11 +69,17 @@ if ($Uninstall) {
     return
 }
 
-if (-not $Token)         { throw "-Token is required. Use a long random string; it must match RELAY_TOKEN on Vercel." }
+if (-not $Token)          { throw "-Token is required. Use a long random string; it must match RELAY_TOKEN on Vercel." }
 if ($Token.Length -lt 16) { throw "That token is too short. Once the relay is on the internet the token is the only thing protecting the camera -- use at least 16 characters." }
-if (-not $TunnelCommand) { throw "-TunnelCommand is required (path to tailscale.exe or cloudflared.exe)." }
-if (-not (Test-Path $TunnelCommand)) { throw "Tunnel program not found: $TunnelCommand" }
-if (-not (Test-Path $relayPath))     { throw "relay.py not found next to this script: $relayPath" }
+if (-not (Test-Path $relayPath)) { throw "relay.py not found next to this script: $relayPath" }
+
+# The tunnel task is optional. Tailscale Funnel does not need one: its config
+# is stored by the Tailscale service and comes back by itself after a reboot.
+# Pass -TunnelCommand only for a tunnel that must be launched each time, such
+# as cloudflared.
+if ($TunnelCommand -and -not (Test-Path $TunnelCommand)) {
+    throw "Tunnel program not found: $TunnelCommand"
+}
 
 $python = (Get-Command python -ErrorAction SilentlyContinue).Source
 if (-not $python) { throw "python was not found on PATH." }
@@ -82,11 +94,13 @@ $relayLauncher = Join-Path $logDir 'start-relay.cmd'
 "$python" -u "$relayPath" --port $Port --token "$Token" >> "$logDir\relay.log" 2>&1
 "@ | Set-Content -Path $relayLauncher -Encoding ASCII
 
-$tunnelLauncher = Join-Path $logDir 'start-tunnel.cmd'
-@"
+if ($TunnelCommand) {
+    $tunnelLauncher = Join-Path $logDir 'start-tunnel.cmd'
+    @"
 @echo off
 "$TunnelCommand" $TunnelArgs >> "$logDir\tunnel.log" 2>&1
 "@ | Set-Content -Path $tunnelLauncher -Encoding ASCII
+}
 
 Remove-TaskIfPresent $relayTask
 Remove-TaskIfPresent $tunnelTask
@@ -99,21 +113,27 @@ $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries `
 $trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
 $principal = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType Interactive -RunLevel Limited
 
-foreach ($t in @(
-    @{ Name = $relayTask;  Script = $relayLauncher;  Desc = 'Reads the camera and republishes it as MJPEG.' },
-    @{ Name = $tunnelTask; Script = $tunnelLauncher; Desc = 'Gives the camera relay a public address.' }
-)) {
+$tasks = @(
+    @{ Name = $relayTask; Script = $relayLauncher; Desc = 'Reads the camera and republishes it as MJPEG.' }
+)
+if ($TunnelCommand) {
+    $tasks += @{ Name = $tunnelTask; Script = $tunnelLauncher; Desc = 'Gives the camera relay a public address.' }
+}
+
+foreach ($t in $tasks) {
     $action = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument "/c `"$($t.Script)`""
     Register-ScheduledTask -TaskName $t.Name -Action $action -Trigger $trigger `
         -Settings $settings -Principal $principal -Description $t.Desc | Out-Null
     Write-Host "Registered $($t.Name)"
 }
 
-Write-Host "`nStarting both now..." -ForegroundColor Cyan
+Write-Host "`nStarting now..." -ForegroundColor Cyan
 Start-ScheduledTask -TaskName $relayTask
 Start-Sleep -Seconds 3
-Start-ScheduledTask -TaskName $tunnelTask
-Start-Sleep -Seconds 5
+if ($TunnelCommand) {
+    Start-ScheduledTask -TaskName $tunnelTask
+    Start-Sleep -Seconds 5
+}
 
 try {
     $health = Invoke-WebRequest -Uri "http://127.0.0.1:$Port/health" -TimeoutSec 10 -UseBasicParsing

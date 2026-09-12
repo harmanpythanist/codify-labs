@@ -100,11 +100,16 @@ cd C:\project\codify-labs\tools\camera-relay
 ```
 
 ```bash
-.\install-autostart.ps1 -Token 'PASTE-YOUR-TOKEN' -TunnelCommand 'C:\Program Files\Tailscale\tailscale.exe' -TunnelArgs 'funnel 8477'
+.\install-autostart.ps1 -Token 'PASTE-YOUR-TOKEN'
 ```
 
-It registers two scheduled tasks, starts them, and confirms the relay is
-answering. They restart themselves if they crash, and come back at every logon.
+With Tailscale Funnel that is all: Funnel's own configuration is kept by the
+Tailscale service and comes back after a reboot, so only the relay needs a
+task. (For cloudflared, which must be relaunched each time, add
+`-TunnelCommand` and `-TunnelArgs` — see `Get-Help .\install-autostart.ps1`.)
+
+It registers the task, starts it, and confirms the relay is answering. It
+restarts itself if it crashes, and comes back at every logon.
 
 Logs land in `%LOCALAPPDATA%\CodifyLabs\`. To undo it all:
 `.\install-autostart.ps1 -Uninstall`
