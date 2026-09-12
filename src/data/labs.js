@@ -22,8 +22,11 @@ export const LABS = {
   label: 'LABS',
   path: '/labs',
 
-  // sha256('earthisroundnotflat')
-  passwordHash: '02475c1f027422cac823c4b4a62e01c9840d6d5fd5134e3cdff69b0500ff84bd',
+  // sha256 of the Labs password. This must stay in step with LABS_PASSWORD in
+  // the Vercel project: this hash only opens the page, while that variable is
+  // what actually authorises the camera. If they drift apart, the gate opens
+  // and then the feed refuses to start.
+  passwordHash: 'e1135d42855ec80f99be7b7803c2bd95b9249767e563513d2203fc5ab460f333',
 
   // Where tools/camera-relay/relay.py listens. Browsers cannot open rtsp://,
   // so the camera feed has to come through that relay; see its docstring.
