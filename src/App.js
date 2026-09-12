@@ -17,6 +17,7 @@ import Certificates from './pages/Certificates';
 import CertificateVerify from './pages/CertificateVerify';
 import About from './pages/About';
 import Contact from './pages/Contact';
+import Labs from './pages/Labs';
 import NotFound from './pages/NotFound';
 
 /** Scroll to the top on navigation, but leave hash links alone. */
@@ -71,6 +72,9 @@ export default function App() {
 
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+
+          {/* Password-gated. Kept out of the sitemap and robots.txt. */}
+          <Route path="/labs" element={<Labs />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>

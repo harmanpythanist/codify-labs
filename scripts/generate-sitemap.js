@@ -21,6 +21,8 @@ function slugsFrom(file) {
 const serviceSlugs = slugsFrom('services.js');
 const projectSlugs = slugsFrom('projects.js');
 
+// /labs is intentionally absent: it is the private, password-gated section
+// and is also disallowed in public/robots.txt.
 const routes = [
   ['/', '1.0'],
   ['/services', '0.9'],

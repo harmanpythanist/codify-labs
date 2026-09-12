@@ -192,3 +192,15 @@ export const IconSearch = (p) => (
 export const IconBookOpen = (p) => (
   <Svg {...p}><path d="M12 6.8S10.2 5 6.8 5H3.5v12.5h3.6c3 0 4.9 1.5 4.9 1.5s1.9-1.5 4.9-1.5h3.6V5h-3.3C13.8 5 12 6.8 12 6.8Z" /><path d="M12 6.8V19" /></Svg>
 );
+
+export const IconLock = (p) => (
+  <Svg {...p}><rect x="4.5" y="10.5" width="15" height="10" rx="2" /><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" /><path d="M12 14.5v2.5" /></Svg>
+);
+
+export const IconUnlock = (p) => (
+  <Svg {...p}><rect x="4.5" y="10.5" width="15" height="10" rx="2" /><path d="M8 10.5V7.5a4 4 0 0 1 7.7-1.5" /><path d="M12 14.5v2.5" /></Svg>
+);
+
+export const IconFlask = (p) => (
+  <Svg {...p}><path d="M10 3.5h4" /><path d="M10.5 3.5v6L5.4 17.8A2 2 0 0 0 7.1 21h9.8a2 2 0 0 0 1.7-3.2L13.5 9.5v-6" /><path d="M7.6 14.5h8.8" /></Svg>
+);

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import Logo from './Logo';
 import { SERVICES } from '../data/services';
+import { LABS } from '../data/labs';
 import { IconMenu, IconClose, IconChevronDown, IconRocket } from './Icons';
 
 const NAV = [
@@ -12,6 +13,9 @@ const NAV = [
   { to: '/internship', label: 'Internship' },
   { to: '/certificates', label: 'Certificates' },
   { to: '/about', label: 'About' },
+  // Private, password-gated section. Deliberately last, and deliberately
+  // not in the footer or the sitemap.
+  { to: LABS.path, label: LABS.label, labs: true },
 ];
 
 export default function Header() {
@@ -118,7 +122,7 @@ export default function Header() {
                 <NavLink
                   key={item.to}
                   to={item.to}
-                  className={({ isActive }) => `nav-link ${isActive ? 'is-active' : ''}`}
+                  className={({ isActive }) => `nav-link ${item.labs ? 'nav-link-labs' : ''} ${isActive ? 'is-active' : ''}`}
                 >
                   {item.label}
                 </NavLink>
@@ -171,7 +175,7 @@ export default function Header() {
             <NavLink
               key={item.to}
               to={item.to}
-              className={({ isActive }) => `drawer-link ${isActive ? 'is-active' : ''}`}
+              className={({ isActive }) => `drawer-link ${item.labs ? 'drawer-link-labs' : ''} ${isActive ? 'is-active' : ''}`}
             >
               {item.label}
             </NavLink>
@@ -217,6 +221,15 @@ export default function Header() {
         }
         .nav-link:hover { color: var(--blue-700); background: var(--bg-tint); }
         .nav-link.is-active { color: var(--blue-700); background: var(--bg-tint); }
+        .nav-link-labs {
+          margin-left: 6px;
+          letter-spacing: 0.08em;
+          font-size: var(--text-xs);
+          color: var(--navy-700);
+          border: 1px dashed var(--line-2);
+        }
+        .nav-link-labs:hover, .nav-link-labs.is-active { border-color: var(--blue-500); }
+        .drawer-link-labs { letter-spacing: 0.08em; color: var(--navy-700); }
         .nav-caret { transition: transform 0.2s ease; }
         .nav-caret.is-open { transform: rotate(180deg); }
 
