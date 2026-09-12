@@ -306,6 +306,20 @@ def build_rtsp_url(ip: str, username: str, password: str, path: str) -> str:
     return f'rtsp://{credentials}{host}{path}'
 
 
+class SingleInstanceServer(ThreadingHTTPServer):
+    """
+    Refuses to start if something already holds the port.
+
+    socketserver sets SO_REUSEADDR by default, which on Windows lets a second
+    process bind a port that is already in use instead of failing. Two relays
+    then share the port and requests land on whichever wins: a session opened
+    on one returns 404 on the other, and the feed breaks in a way that looks
+    random. Better to fail immediately and say so.
+    """
+
+    allow_reuse_address = False
+
+
 class RelayHandler(BaseHTTPRequestHandler):
     server_version = 'CamRelay/1.0'
     allowed_origins: list[str] = []
@@ -552,7 +566,17 @@ def main() -> None:
 
     threading.Thread(target=sweeper, daemon=True).start()
 
-    server = ThreadingHTTPServer((args.host, args.port), RelayHandler)
+    try:
+        server = SingleInstanceServer((args.host, args.port), RelayHandler)
+    except OSError as exc:
+        print(
+            f'Could not listen on {args.host}:{args.port} -- {exc}\n'
+            'Another relay is probably already running. Stop it first, or pass '
+            '--port to use a different one.',
+            file=sys.stderr,
+        )
+        raise SystemExit(1)
+
     server.daemon_threads = True
 
     print(f'Camera relay listening on http://{args.host}:{args.port}')

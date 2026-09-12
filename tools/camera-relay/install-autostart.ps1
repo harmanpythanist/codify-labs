@@ -142,14 +142,21 @@ try {
     Write-Warning "Relay is not answering yet. Check $logDir\relay.log"
 }
 
+$installed = ($tasks | ForEach-Object { $_.Name }) -join ', '
+$what = if ($TunnelCommand) { 'The relay and the tunnel start' } else { 'The relay starts' }
+$tunnelNote = if ($TunnelCommand) { '' } else {
+    "`nNo tunnel task was created. Tailscale Funnel keeps its own configuration`nand comes back after a reboot; check it with 'tailscale funnel status'.`n"
+}
+
 Write-Host @"
 
-Done. Both start automatically at logon from now on.
+Done. $what automatically at logon from now on.
 
+  Installed: $installed
   Logs:      $logDir
-  Stop now:  Stop-ScheduledTask -TaskName $relayTask, $tunnelTask
+  Stop now:  Stop-ScheduledTask -TaskName $installed
   Remove:    .\install-autostart.ps1 -Uninstall
-
+$tunnelNote
 Set RELAY_TOKEN on Vercel to the token you passed here, or the website will
 not be able to open the camera.
 "@ -ForegroundColor Green
