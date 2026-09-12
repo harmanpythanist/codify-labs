@@ -109,6 +109,25 @@ module.exports = async (req, res) => {
   failures = 0;
 
   const relay = RELAY_URL.replace(/\/$/, '');
+
+  // Catch a malformed RELAY_URL here, where we can say so, rather than letting
+  // fetch fail with something that reads like the relay being switched off.
+  let relayHost;
+  try {
+    relayHost = new URL(relay).host;
+  } catch {
+    return res.status(500).json({
+      error: `RELAY_URL is not a valid address: "${relay}". It needs the https:// prefix and no path.`,
+    });
+  }
+
+  if (typeof fetch !== 'function') {
+    return res.status(500).json({
+      error: 'This deployment runs a Node version older than 18, which has no fetch(). '
+           + 'Raise the Node.js version in Vercel > Settings > General and redeploy.',
+    });
+  }
+
   const abort = new AbortController();
   const timer = setTimeout(() => abort.abort(), 15000);
 
@@ -130,10 +149,18 @@ module.exports = async (req, res) => {
       }),
     });
   } catch (err) {
+    if (err.name === 'AbortError') {
+      return res.status(502).json({
+        error: 'The camera relay did not answer in time. Is the laptop awake and the tunnel running?',
+      });
+    }
+    // Say what actually went wrong. "It may be switched off" covers a dead
+    // laptop, a wrong address and a TLS failure alike, which makes it useless
+    // for working out which one you have. The cause carries no secret -- the
+    // relay's address reaches the browser on success anyway.
+    const cause = err.cause && err.cause.message ? `${err.message} (${err.cause.message})` : err.message;
     return res.status(502).json({
-      error: err.name === 'AbortError'
-        ? 'The camera relay did not answer in time. Is the laptop awake and the tunnel running?'
-        : 'Could not reach the camera relay. It may be switched off.',
+      error: `Could not reach the camera relay at ${relayHost}: ${cause}`,
     });
   } finally {
     clearTimeout(timer);
