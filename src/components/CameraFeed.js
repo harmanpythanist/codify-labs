@@ -19,6 +19,7 @@ import {
 export default function CameraFeed() {
   const [form, setForm] = useState({
     relay: LABS.relayUrl,
+    token: '',
     ip: '',
     username: '',
     password: '',
@@ -61,11 +62,22 @@ export default function CameraFeed() {
 
     const relay = form.relay.trim().replace(/\/$/, '');
 
+    // The relay gives the camera 8s to answer; allow a little more than that
+    // before giving up, so a dead relay cannot leave the page spinning.
+    const abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(), 20000);
+
     let res;
     try {
       res = await fetch(`${relay}/session`, {
+        signal: abort.signal,
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          // Sent as a header, never in the URL, so it cannot end up in a log
+          // or in browser history.
+          'X-Relay-Token': form.token,
+        },
         body: JSON.stringify({
           ip: form.ip.trim(),
           username: form.username,
@@ -74,13 +86,17 @@ export default function CameraFeed() {
           width: Number(form.width),
         }),
       });
-    } catch {
+    } catch (err) {
       setStatus('error');
       setError(
-        `Could not reach the relay at ${relay}. Start it on the computer that ` +
-        'can see the camera: python tools/camera-relay/relay.py'
+        err.name === 'AbortError'
+          ? `The relay at ${relay} did not answer in time. It may be starting up, or the tunnel may be down.`
+          : `Could not reach the relay at ${relay}. Start it on the computer that ` +
+            'can see the camera: python tools/camera-relay/relay.py'
       );
       return;
+    } finally {
+      clearTimeout(timer);
     }
 
     let data = {};
@@ -124,6 +140,20 @@ export default function CameraFeed() {
           <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
             <IconVideo size={19} /> Camera
           </h3>
+
+          <label className="field">
+            <span className="field-label">Relay access token</span>
+            <input
+              className="input"
+              type="password"
+              value={form.token}
+              onChange={set('token')}
+              placeholder="Printed by relay.py"
+              autoComplete="off"
+              spellCheck="false"
+              required
+            />
+          </label>
 
           <label className="field">
             <span className="field-label">Camera IP address</span>
@@ -219,7 +249,11 @@ export default function CameraFeed() {
           )}
 
           <div className="cam-actions">
-            <button type="submit" className="btn btn-primary btn-block" disabled={connecting || !form.ip.trim()}>
+            <button
+              type="submit"
+              className="btn btn-primary btn-block"
+              disabled={connecting || !form.ip.trim() || !form.token}
+            >
               {connecting
                 ? <><IconSpinner size={16} className="spin" /> Connecting…</>
                 : <><IconVideo size={16} /> {session ? 'Reconnect' : 'Connect'}</>}

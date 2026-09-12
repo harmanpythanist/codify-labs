@@ -28,8 +28,15 @@ own PC, on the same network as the camera. It needs Python 3.8+ and
 python tools/camera-relay/relay.py
 ```
 
-It listens on `http://127.0.0.1:8477`, **this machine only**. Then open
-`/labs`, enter the camera's IP, username and password, and press Connect.
+It listens on `http://127.0.0.1:8477`, **this machine only**, and prints an
+access token:
+
+```
+  ACCESS TOKEN:  7Kd2pQx9RtLm
+```
+
+Then open `/labs`, paste that token, enter the camera's IP, username and
+password, and press Connect.
 
 Options:
 
@@ -37,7 +44,57 @@ Options:
 | --- | --- | --- |
 | `--port` | `8477` | Port to listen on. |
 | `--host` | `127.0.0.1` | Bind address. `0.0.0.0` exposes the relay to your whole network — see the warning below. |
+| `--token` | generated | Access token required to open a session. Pass one to keep it stable across restarts. |
 | `--allow-origin` | — | Extra website origin allowed to use the relay. Repeatable. |
+
+## Watching from anywhere (public tunnel)
+
+A camera on your home network cannot be reached from the internet, and the
+website's own servers cannot see it either. To watch from outside, the relay
+needs a public address, which a tunnel provides without any port forwarding.
+
+**This puts your camera on the internet.** The access token becomes the only
+thing protecting it, so use a long one and treat it like a password.
+
+Install the tunnel client once:
+
+```bash
+winget install --id Cloudflare.cloudflared
+```
+
+Then run the relay and the tunnel side by side, in two terminals:
+
+```bash
+python tools/camera-relay/relay.py --token CHOOSE-A-LONG-RANDOM-TOKEN
+```
+
+```bash
+cloudflared tunnel --url http://127.0.0.1:8477
+```
+
+`cloudflared` prints a public HTTPS address like
+`https://random-words-here.trycloudflare.com`. On the Labs page, open **Show
+advanced settings** and put that address in *Relay address*. It works from any
+network, including mobile data.
+
+Two things to know about quick tunnels: the address changes every time you
+restart `cloudflared`, and anyone who has both the address and the token can
+watch the camera. For a fixed address like `camera.codifylabspk.com` you need a
+named tunnel, which requires the domain to be on Cloudflare:
+
+```bash
+cloudflared tunnel login
+cloudflared tunnel create camera-relay
+cloudflared tunnel route dns camera-relay camera.codifylabspk.com
+cloudflared tunnel run --url http://127.0.0.1:8477 camera-relay
+```
+
+Add the site's own origin if it is not already allowed:
+`--allow-origin https://your-site`.
+
+Bandwidth: the feed is continuous JPEG, roughly 1–2 Mbit/s at 640 px. It runs
+for as long as the page is open, so on mobile data, use a smaller frame width
+or the camera's sub-stream.
 
 ## What it does and does not keep
 
@@ -54,15 +111,23 @@ Options:
 
 ## Security notes
 
-- The relay binds to `127.0.0.1` on purpose. If you pass `--host 0.0.0.0`,
-  anyone on your network can ask it to open a stream, and there is no
-  authentication on the relay itself. Only do that on a network you trust.
-- Only the origins listed in `DEFAULT_ORIGINS` may call the relay, so a random
-  website you have open cannot quietly drive your camera. Add your own with
-  `--allow-origin`.
-- The relay is **not** meant to be exposed to the public internet. Publishing a
-  camera feed to the world needs authentication, TLS, and a rate limit, none of
-  which this has.
+- **The access token is the real protection.** CORS and the Labs password are
+  not: CORS only restrains browsers, and the Labs gate runs in the visitor's
+  browser, so neither stops a plain HTTP request from a script. Anyone holding
+  the token and the relay's address can watch the camera.
+- After 8 wrong tokens the relay refuses new sessions for 5 minutes. That
+  locks you out too — restart the relay to clear it.
+- At most 4 cameras can be open at once, so a stolen token cannot be used to
+  exhaust the machine.
+- The relay binds to `127.0.0.1` on purpose. `--host 0.0.0.0` opens it to your
+  whole network; a tunnel is the better way to reach it from outside, because
+  the tunnel gives you HTTPS and the relay itself stays on localhost.
+- Only the origins listed in `DEFAULT_ORIGINS` may call the relay from a
+  browser. Add your own with `--allow-origin`.
+- The token is sent as a header, never in a URL, so it stays out of logs and
+  browser history. The stream URL carries only a short-lived session id.
+- If you think the token has leaked, restart the relay with a new one. Every
+  open session dies with it.
 
 ## If it does not connect
 
