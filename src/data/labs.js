@@ -27,6 +27,13 @@ export const LABS = {
 
   // Unlock lasts for the browser tab's session only; closing the tab re-locks.
   storageKey: 'codifylabs.labs.unlocked',
+
+  // Where tools/camera-relay/relay.py listens. Browsers cannot open rtsp://,
+  // so the camera feed has to come through that relay; see its docstring.
+  relayUrl: 'http://127.0.0.1:8477',
+
+  // EZVIZ main stream, the same path the OpenCV notebook used.
+  streamPath: '/h264/ch1/main/av_stream',
 };
 
 const K = [

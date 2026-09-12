@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import useSeo from '../hooks/useSeo';
 import { PageHero } from '../components/ui';
 import { LABS, hashPassword } from '../data/labs';
-import { IconLock, IconUnlock, IconFlask, IconSpinner, IconAlert } from '../components/Icons';
+import CameraFeed from '../components/CameraFeed';
+import { IconLock, IconUnlock, IconSpinner, IconAlert } from '../components/Icons';
 
 /**
  * Keeps search engines off this route while it is on screen.
@@ -121,11 +122,8 @@ function Gate({ onUnlock }) {
           margin: -4px 0 14px;
           font-size: var(--text-xs); font-weight: 600; color: var(--error);
         }
-        .spin { animation: spin 0.9s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
         @media (prefers-reduced-motion: reduce) {
           .gate { animation: none; }
-          .spin { animation: none; }
         }
       `}</style>
     </section>
@@ -137,8 +135,8 @@ function LabsContent({ onLock }) {
     <>
       <PageHero
         eyebrow="Internal"
-        title="Labs"
-        subtitle="Private workspace for experiments and work in progress. Not linked from anywhere public."
+        title="Camera"
+        subtitle="Live view of an RTSP camera. The feed is relayed through your own machine and is never recorded."
       >
         <button className="btn btn-secondary btn-sm" style={{ marginTop: 22 }} onClick={onLock}>
           <IconLock size={15} /> Lock this section
@@ -147,15 +145,7 @@ function LabsContent({ onLock }) {
 
       <section className="section">
         <div className="container">
-          <div className="card" style={{ textAlign: 'center', padding: '52px 28px' }}>
-            <span className="icon-tile" style={{ margin: '0 auto 18px' }}><IconFlask size={22} /></span>
-            <h2 className="card-title">Nothing here yet</h2>
-            <p className="card-text" style={{ maxWidth: '46ch', margin: '0 auto' }}>
-              This is the shell for the private section. Drop the experiments,
-              demos, or internal tools you want to keep off the public site in
-              <code style={{ margin: '0 4px' }}>src/pages/Labs.js</code>.
-            </p>
-          </div>
+          <CameraFeed />
         </div>
       </section>
     </>
