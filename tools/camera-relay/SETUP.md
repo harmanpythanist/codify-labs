@@ -36,7 +36,10 @@ The relay is on your home network, so the internet cannot reach it without a
 tunnel. The tunnel needs a **fixed** address, otherwise you are back to
 re-typing it every restart.
 
-### Tailscale Funnel (recommended — no DNS changes)
+### Tailscale Funnel (quickest, but only reliable for *your own* viewing)
+
+Fine for testing and for watching it yourself. Not suitable if other people
+need to watch — see the Cloudflare section below for why.
 
 ```bash
 winget install --id tailscale.tailscale
@@ -67,21 +70,59 @@ https://your-laptop.tailXXXX.ts.net
 One caveat: Tailscale intends Funnel for light traffic, and a camera feed is
 continuous. If it ever throttles, switch to the Cloudflare option below.
 
-### Cloudflare named tunnel (alternative — nicer URL, but moves your DNS)
+### Cloudflare named tunnel — `camera.codifylabspk.com`
 
-This gives `camera.codifylabspk.com`, but it requires codifylabspk.com's
-nameservers to move from GoDaddy to Cloudflare. **Copy every existing DNS
-record into Cloudflare first**, or the live site goes down when the
-nameservers switch. Then:
+Use this when other people need to watch. Tailscale's `*.ts.net` records are
+not visible to every resolver: Cloudflare's public resolver returns NXDOMAIN
+for the very name Google's resolves. Vercel's resolver has the same problem
+(worked around in `api/labs/session.js`), but **the viewer's browser fetches
+the video straight from the relay**, and that lookup cannot be worked around
+from here. Anyone whose DNS is 1.1.1.1 gets past the password and then sees no
+video. A hostname on your own domain resolves for everybody.
+
+This changes which company answers DNS for codifylabspk.com. The domain stays
+registered at GoDaddy — nothing about ownership, billing or renewal moves, and
+it is reversible by pasting GoDaddy's nameservers back.
+
+**1. Add the domain to Cloudflare.** Sign up at cloudflare.com, *Add a site*,
+enter codifylabspk.com, choose the Free plan. Cloudflare scans the existing
+records — check that both of these are present before going further:
+
+| Type | Name | Value | Proxy |
+| --- | --- | --- | --- |
+| A | `codifylabspk.com` | `216.198.79.1` | **DNS only** (grey cloud) |
+| CNAME | `www` | `cname.vercel-dns.com` | **DNS only** (grey cloud) |
+
+Grey cloud matters. Proxying Vercel through Cloudflare causes TLS and redirect
+trouble; leave both unproxied.
+
+**2. Change the nameservers at GoDaddy** to the two Cloudflare gives you.
+Activation usually takes minutes, sometimes hours. Cloudflare emails you.
+
+**3. Log in from this machine** and pick codifylabspk.com in the browser:
 
 ```bash
-cloudflared tunnel login
-cloudflared tunnel create camera-relay
-cloudflared tunnel route dns camera-relay camera.codifylabspk.com
+& 'C:\Program Files (x86)\cloudflared\cloudflared.exe' tunnel login
 ```
 
-`RELAY_URL` is then `https://camera.codifylabspk.com`, and the tunnel argument
-for step 2 is `tunnel run --url http://127.0.0.1:8477 camera-relay`.
+**4. Run the setup script** — as Administrator, because it installs a service:
+
+```bash
+.\setup-cloudflare-tunnel.ps1 -Hostname camera.codifylabspk.com
+```
+
+It creates the tunnel, adds the DNS record, writes the config, installs
+cloudflared as a Windows service so it starts at boot, and checks that the
+hostname answers from more than one resolver.
+
+**5. On Vercel**, set `RELAY_URL` to `https://camera.codifylabspk.com` and
+redeploy.
+
+**6. Close the old entrance** once the site works, so there is only one way in:
+
+```bash
+tailscale funnel --https=443 off
+```
 
 ---
 
