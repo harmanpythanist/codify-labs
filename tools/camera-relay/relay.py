@@ -67,6 +67,16 @@ import cv2  # noqa: E402  (import order matters: the env var above comes first)
 OPEN_TIMEOUT_MS = 8000
 READ_TIMEOUT_MS = 8000
 
+# How long to wait for the first actual frame before declaring the camera
+# unusable. Must be longer than READ_TIMEOUT_MS so a single slow read does not
+# fail the whole session.
+FIRST_FRAME_TIMEOUT = 12.0
+
+# How long a live stream may go without a new frame before the response is
+# ended, so the page can say the feed stopped rather than showing a still
+# picture that quietly went stale.
+STALL_TIMEOUT = 15.0
+
 # Origins allowed to talk to this relay. It is deliberately a short list and
 # not "*": the relay sits on localhost, so any web page you happen to have
 # open could otherwise ask it to start streaming your camera.
@@ -138,6 +148,33 @@ class CameraSession:
 
         self._thread = threading.Thread(target=self._read_loop, daemon=True)
         self._thread.start()
+
+        # Opening the stream is not the same as receiving video. A camera on a
+        # weak link accepts the connection and then sends nothing, so
+        # isOpened() is true, the session looks healthy, the page says "Live"
+        # and no picture ever arrives. Wait for a real frame before calling it
+        # a success, so the failure is reported honestly and at once.
+        if not self._wait_for_first_frame(FIRST_FRAME_TIMEOUT):
+            self.close()
+            raise ConnectionError(
+                'The camera accepted the connection but sent no video. It is '
+                'usually a weak network link between this computer and the '
+                'camera; the camera being busy with too many viewers does it '
+                'too.'
+            )
+
+    def _wait_for_first_frame(self, timeout: float) -> bool:
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            with self._lock:
+                if self._frame is not None:
+                    return True
+                if self._error:
+                    return False
+            if not self._thread.is_alive():
+                return False
+            time.sleep(0.05)
+        return False
 
     def _read_loop(self) -> None:
         misses = 0
@@ -490,6 +527,12 @@ class RelayHandler(BaseHTTPRequestHandler):
         encode_params = [int(cv2.IMWRITE_JPEG_QUALITY), JPEG_QUALITY]
         frame_interval = 1.0 / TARGET_FPS
         last_id = 0
+        # When the last frame arrived. Kept outside the loop on purpose: it was
+        # once reset every iteration, which meant the give-up test below always
+        # compared against ~10ms ago and never fired, so a camera that stopped
+        # sending left this handler spinning forever instead of ending the
+        # response and letting the page report the problem.
+        last_frame_at = time.monotonic()
 
         try:
             while True:
@@ -504,9 +547,11 @@ class RelayHandler(BaseHTTPRequestHandler):
                 if frame is None:
                     # Nothing new yet: wait briefly rather than spin.
                     time.sleep(0.01)
-                    if time.monotonic() - started > 10:
+                    if time.monotonic() - last_frame_at > STALL_TIMEOUT:
                         break
                     continue
+
+                last_frame_at = time.monotonic()
 
                 if mode == 'gray':
                     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
