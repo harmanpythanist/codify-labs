@@ -105,31 +105,25 @@ Write-Host "Wrote $configPath"
 
 # --------------------------------------------------------------- service --
 
-$svc = Get-Service -Name 'cloudflared' -ErrorAction SilentlyContinue
-if (-not $svc) {
-    Write-Host "Installing cloudflared as a Windows service (starts at boot)..."
-    & $cf service install
-    if ($LASTEXITCODE -ne 0) {
-        Write-Warning "Service install failed. This usually means the shell is not elevated -- re-run this script as Administrator."
-        throw "Could not install the cloudflared service."
-    }
-    Start-Sleep -Seconds 3
-}
+# Deliberately NOT `cloudflared service install`.
+#
+# That registers the service with a bare command line and no config path, and
+# it runs as LocalSystem, which reads config from its own profile rather than
+# yours. The result is the worst kind of failure: the service reports Running
+# while the tunnel has no connections at all, the hostname times out, and
+# nothing in any log explains why. It also wedged in StopPending on this
+# machine and had to be uninstalled.
+#
+# A scheduled task under your own account runs `tunnel run` explicitly against
+# the config we just wrote, needs no elevation, and is the same mechanism the
+# relay already uses.
+Write-Host "Registering the tunnel as a scheduled task..."
+& (Join-Path $PSScriptRoot 'install-autostart.ps1') `
+    -TunnelOnly `
+    -TunnelCommand $cf `
+    -TunnelArgs "tunnel run $TunnelName"
 
-# The service runs as LocalSystem, which reads its configuration from its own
-# profile and not from yours. Without this copy the service starts, reports
-# Running, and does absolutely nothing -- the tunnel shows no connections and
-# the hostname times out, with no error anywhere to explain why.
-$systemConfigDir = 'C:\Windows\System32\config\systemprofile\.cloudflared'
-Write-Host "Copying the tunnel config into the service's own profile..."
-New-Item -ItemType Directory -Path $systemConfigDir -Force | Out-Null
-Copy-Item $credentials -Destination $systemConfigDir -Force
-$systemCredentials = Join-Path $systemConfigDir (Split-Path $credentials -Leaf)
-(Get-Content $configPath) -replace [regex]::Escape($credentials), $systemCredentials |
-    Set-Content -Path (Join-Path $systemConfigDir 'config.yml') -Encoding ASCII
-
-Restart-Service -Name 'cloudflared'
-Start-Sleep -Seconds 5
+Start-Sleep -Seconds 8
 
 # A running service is not the same as a connected tunnel. Check the tunnel.
 $info = & $cf tunnel info $TunnelName 2>&1 | Out-String

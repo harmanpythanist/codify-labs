@@ -111,15 +111,18 @@ Activation usually takes minutes, sometimes hours. Cloudflare emails you.
 .\setup-cloudflare-tunnel.ps1 -Hostname camera.codifylabspk.com
 ```
 
-It creates the tunnel, adds the DNS record, writes the config, installs
-cloudflared as a Windows service so it starts at boot, and checks that the
-hostname answers from more than one resolver.
+It creates the tunnel, adds the DNS record, writes the config, registers the
+tunnel as a scheduled task, and checks that the hostname answers from more
+than one resolver.
 
-One trap it handles for you: the service runs as LocalSystem and reads its
-config from *that* account's profile, not yours. Install the service without
-copying the config across and it sits there reporting **Running** while doing
-nothing at all — `cloudflared tunnel info` shows no connections and the
-hostname simply times out, with nothing in any log to say why.
+**Do not use `cloudflared service install`.** It looks like the right thing and
+is a trap: the service is registered with a bare command line and runs as
+LocalSystem, which reads config from *that* account's profile rather than
+yours. It then sits there reporting **Running** while doing nothing —
+`cloudflared tunnel info` shows no connections, the hostname times out, and no
+log anywhere says why. It also wedged in `StopPending` and had to be
+uninstalled. A scheduled task under your own account runs `tunnel run`
+explicitly and needs no elevation.
 
 **5. On Vercel**, set `RELAY_URL` to `https://camera.codifylabspk.com` and
 redeploy.
@@ -155,8 +158,11 @@ Tailscale service and comes back after a reboot, so only the relay needs a
 task. (For cloudflared, which must be relaunched each time, add
 `-TunnelCommand` and `-TunnelArgs` — see `Get-Help .\install-autostart.ps1`.)
 
-It registers the task, starts it, and confirms the relay is answering. It
-restarts itself if it crashes, and comes back at every logon.
+The task starts at logon **and is re-checked every five minutes**. That second
+part is not belt-and-braces: the relay once exited with `0xC000013A`, a code
+Windows does not count as a failure, so restart-on-failure never fired and the
+feed was down for hours with nothing to say so. The launcher exits quietly if
+the relay is already listening, so the re-check only ever revives a dead one.
 
 Logs land in `%LOCALAPPDATA%\CodifyLabs\`. To undo it all:
 `.\install-autostart.ps1 -Uninstall`

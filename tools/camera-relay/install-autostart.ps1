@@ -1,47 +1,55 @@
 <#
 .SYNOPSIS
-  Makes the camera relay and its tunnel start automatically when you log in.
+  Keeps the camera relay (and optionally its tunnel) running by themselves.
 
 .DESCRIPTION
-  Registers two Scheduled Tasks that run hidden at logon:
+  Registers scheduled tasks that start at logon and are re-checked every five
+  minutes:
 
     CodifyLabs-CameraRelay   the Python relay that reads the camera
     CodifyLabs-CameraTunnel  the tunnel that gives it a public address
 
-  After this, a fresh boot needs nothing from you: log in, and the feed is
-  live. Logs go to %LOCALAPPDATA%\CodifyLabs\.
+  The five-minute re-check matters. The relay died once at 2:43 AM with exit
+  code 0xC000013A, which Windows does not count as a failure, so the task's
+  restart-on-failure rule never fired and the feed was down for hours with
+  nothing to say so. Each task's launcher checks whether the thing is already
+  running and exits quietly if it is, so the repeat only ever revives a dead
+  one.
 
-  The relay token is fixed here rather than generated, because the website's
-  server needs to know it in advance. Keep it long, and treat it as a password.
+  Both tasks run as you, not as LocalSystem, and need no elevation.
 
 .PARAMETER Token
-  The relay access token. Must match RELAY_TOKEN in the Vercel project.
+  Access token for the relay. Must match RELAY_TOKEN in the Vercel project.
+  Required unless -TunnelOnly is given.
+
+.PARAMETER TunnelOnly
+  Only (re)register the tunnel task, leaving the relay task alone. Used by
+  setup-cloudflare-tunnel.ps1, which has no business touching the relay's
+  token.
 
 .PARAMETER TunnelCommand
-  Full path to the tunnel executable, e.g. tailscale.exe or cloudflared.exe.
+  Full path to the tunnel executable, e.g. cloudflared.exe.
 
 .PARAMETER TunnelArgs
-  Arguments for it. For Tailscale Funnel:  funnel 8477
-  For a cloudflared named tunnel:          tunnel run --url http://127.0.0.1:8477 my-tunnel
+  Arguments for it, e.g. 'tunnel run camera-relay'.
 
 .EXAMPLE
-  # With Tailscale Funnel, only the relay needs a task -- Funnel's own config
-  # survives a reboot, so there is no tunnel command to re-run.
+  # Relay only -- for Tailscale Funnel, which needs no process of its own.
   .\install-autostart.ps1 -Token 'a-long-random-token'
 
 .EXAMPLE
-  # With cloudflared, which must be launched each time.
+  # Relay and a cloudflared tunnel.
   .\install-autostart.ps1 -Token 'a-long-random-token' `
       -TunnelCommand 'C:\Program Files (x86)\cloudflared\cloudflared.exe' `
-      -TunnelArgs 'tunnel run --url http://127.0.0.1:8477 my-tunnel'
+      -TunnelArgs 'tunnel run camera-relay'
 
 .EXAMPLE
-  # Remove both tasks again
   .\install-autostart.ps1 -Uninstall
 #>
 [CmdletBinding()]
 param(
     [string]$Token,
+    [switch]$TunnelOnly,
     [string]$TunnelCommand,
     [string]$TunnelArgs,
     [int]$Port = 8477,
@@ -69,94 +77,98 @@ if ($Uninstall) {
     return
 }
 
-if (-not $Token)          { throw "-Token is required. Use a long random string; it must match RELAY_TOKEN on Vercel." }
-if ($Token.Length -lt 16) { throw "That token is too short. Once the relay is on the internet the token is the only thing protecting the camera -- use at least 16 characters." }
-if (-not (Test-Path $relayPath)) { throw "relay.py not found next to this script: $relayPath" }
-
-# The tunnel task is optional. Tailscale Funnel does not need one: its config
-# is stored by the Tailscale service and comes back by itself after a reboot.
-# Pass -TunnelCommand only for a tunnel that must be launched each time, such
-# as cloudflared.
+if (-not $TunnelOnly) {
+    if (-not $Token)          { throw "-Token is required. Use a long random string; it must match RELAY_TOKEN on Vercel." }
+    if ($Token.Length -lt 16) { throw "That token is too short. Once the relay is reachable from the internet the token is the only thing protecting the camera -- use at least 16 characters." }
+    if (-not (Test-Path $relayPath)) { throw "relay.py not found next to this script: $relayPath" }
+}
 if ($TunnelCommand -and -not (Test-Path $TunnelCommand)) {
     throw "Tunnel program not found: $TunnelCommand"
 }
-
-$python = (Get-Command python -ErrorAction SilentlyContinue).Source
-if (-not $python) { throw "python was not found on PATH." }
+if ($TunnelOnly -and -not $TunnelCommand) {
+    throw "-TunnelOnly needs -TunnelCommand."
+}
 
 New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 
-# A tiny launcher per service, so stdout and stderr land in a log file and the
-# console window never appears.
-$relayLauncher = Join-Path $logDir 'start-relay.cmd'
-@"
+# Start at logon, then re-check every five minutes forever. IgnoreNew stops a
+# re-check piling up behind a slow start.
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
+    -StartWhenAvailable -MultipleInstances IgnoreNew -ExecutionTimeLimit ([TimeSpan]::Zero)
+$atLogon = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+$every5 = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) `
+    -RepetitionInterval (New-TimeSpan -Minutes 5) -RepetitionDuration (New-TimeSpan -Days 3650)
+$principal = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" `
+    -LogonType Interactive -RunLevel Limited
+
+function Register-Watchdog($name, $script, $description) {
+    Remove-TaskIfPresent $name
+    $action = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument "/c `"$script`""
+    Register-ScheduledTask -TaskName $name -Action $action -Trigger @($atLogon, $every5) `
+        -Settings $settings -Principal $principal -Description $description | Out-Null
+    Write-Host "Registered $name"
+}
+
+$installed = @()
+
+if (-not $TunnelOnly) {
+    $python = (Get-Command python -ErrorAction SilentlyContinue).Source
+    if (-not $python) { throw "python was not found on PATH." }
+
+    # The guard is what keeps the five-minute re-check harmless: if the port is
+    # already being listened on, the relay is alive and this exits quietly.
+    $relayLauncher = Join-Path $logDir 'start-relay.cmd'
+    @"
 @echo off
+rem Already listening? Then the relay is alive; leave it alone.
+netstat -ano | findstr ":$Port" | findstr LISTENING >nul && exit /b 0
 "$python" -u "$relayPath" --port $Port --token "$Token" >> "$logDir\relay.log" 2>&1
 "@ | Set-Content -Path $relayLauncher -Encoding ASCII
 
+    Register-Watchdog $relayTask $relayLauncher 'Reads the camera and republishes it as MJPEG.'
+    $installed += $relayTask
+}
+
 if ($TunnelCommand) {
+    $exeName = Split-Path $TunnelCommand -Leaf
     $tunnelLauncher = Join-Path $logDir 'start-tunnel.cmd'
     @"
 @echo off
+rem Already running? Then leave it alone.
+tasklist /FI "IMAGENAME eq $exeName" | findstr /I $exeName >nul && exit /b 0
 "$TunnelCommand" $TunnelArgs >> "$logDir\tunnel.log" 2>&1
 "@ | Set-Content -Path $tunnelLauncher -Encoding ASCII
+
+    Register-Watchdog $tunnelTask $tunnelLauncher 'Public address for the camera relay.'
+    $installed += $tunnelTask
 }
 
-Remove-TaskIfPresent $relayTask
-Remove-TaskIfPresent $tunnelTask
+Write-Host "`nStarting..." -ForegroundColor Cyan
+foreach ($name in $installed) { Start-ScheduledTask -TaskName $name; Start-Sleep -Seconds 3 }
 
-# Restart on failure: a camera that drops overnight should come back by itself.
-$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries `
-    -DontStopIfGoingOnBatteries -StartWhenAvailable `
-    -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) `
-    -ExecutionTimeLimit ([TimeSpan]::Zero)
-$trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
-$principal = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType Interactive -RunLevel Limited
-
-$tasks = @(
-    @{ Name = $relayTask; Script = $relayLauncher; Desc = 'Reads the camera and republishes it as MJPEG.' }
-)
-if ($TunnelCommand) {
-    $tasks += @{ Name = $tunnelTask; Script = $tunnelLauncher; Desc = 'Gives the camera relay a public address.' }
+if (-not $TunnelOnly) {
+    Start-Sleep -Seconds 3
+    try {
+        $health = Invoke-WebRequest -Uri "http://127.0.0.1:$Port/health" -TimeoutSec 10 -UseBasicParsing
+        Write-Host "Relay is answering: $($health.Content)" -ForegroundColor Green
+    } catch {
+        Write-Warning "Relay is not answering yet. Check $logDir\relay.log"
+    }
 }
 
-foreach ($t in $tasks) {
-    $action = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument "/c `"$($t.Script)`""
-    Register-ScheduledTask -TaskName $t.Name -Action $action -Trigger $trigger `
-        -Settings $settings -Principal $principal -Description $t.Desc | Out-Null
-    Write-Host "Registered $($t.Name)"
-}
-
-Write-Host "`nStarting now..." -ForegroundColor Cyan
-Start-ScheduledTask -TaskName $relayTask
-Start-Sleep -Seconds 3
-if ($TunnelCommand) {
-    Start-ScheduledTask -TaskName $tunnelTask
-    Start-Sleep -Seconds 5
-}
-
-try {
-    $health = Invoke-WebRequest -Uri "http://127.0.0.1:$Port/health" -TimeoutSec 10 -UseBasicParsing
-    Write-Host "Relay is answering: $($health.Content)" -ForegroundColor Green
-} catch {
-    Write-Warning "Relay is not answering yet. Check $logDir\relay.log"
-}
-
-$installed = ($tasks | ForEach-Object { $_.Name }) -join ', '
-$what = if ($TunnelCommand) { 'The relay and the tunnel start' } else { 'The relay starts' }
-$tunnelNote = if ($TunnelCommand) { '' } else {
-    "`nNo tunnel task was created. Tailscale Funnel keeps its own configuration`nand comes back after a reboot; check it with 'tailscale funnel status'.`n"
-}
-
+$list = $installed -join ', '
 Write-Host @"
 
-Done. $what automatically at logon from now on.
+Done. These start at logon and are re-checked every five minutes:
 
-  Installed: $installed
+  $list
+
   Logs:      $logDir
-  Stop now:  Stop-ScheduledTask -TaskName $installed
+  Stop now:  Stop-ScheduledTask -TaskName $list
   Remove:    .\install-autostart.ps1 -Uninstall
-$tunnelNote
-Set RELAY_TOKEN on Vercel to the token you passed here, or the website will
-not be able to open the camera.
+
 "@ -ForegroundColor Green
+
+if (-not $TunnelOnly) {
+    Write-Host "Set RELAY_TOKEN on Vercel to the token you passed here, or the website cannot open the camera.`n" -ForegroundColor Green
+}
