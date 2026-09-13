@@ -115,6 +115,12 @@ It creates the tunnel, adds the DNS record, writes the config, installs
 cloudflared as a Windows service so it starts at boot, and checks that the
 hostname answers from more than one resolver.
 
+One trap it handles for you: the service runs as LocalSystem and reads its
+config from *that* account's profile, not yours. Install the service without
+copying the config across and it sits there reporting **Running** while doing
+nothing at all — `cloudflared tunnel info` shows no connections and the
+hostname simply times out, with nothing in any log to say why.
+
 **5. On Vercel**, set `RELAY_URL` to `https://camera.codifylabspk.com` and
 redeploy.
 
